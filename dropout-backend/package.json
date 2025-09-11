@@ -1,0 +1,27 @@
+{
+  "name": "dropout-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "seed": "node scripts/seed.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "csv-parse": "^5.6.0",
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemon": "^3.1.10",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "axios": "^1.6.0"
+  }
+}
