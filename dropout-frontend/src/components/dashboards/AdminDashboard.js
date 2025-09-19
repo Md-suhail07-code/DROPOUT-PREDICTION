@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../../App';
-import { studentAPI, mentorAPI } from '../../services/api';
+import { studentAPI, mentorAPI, } from '../../services/api';
 import TopNav from '../common/TopNav';
 import SummaryCards from '../common/SummaryCards';
 import './index.css'
@@ -12,10 +13,16 @@ const AdminDashboard = () => {
   const [search, setSearch] = useState('');
   const [mentorFilter, setMentorFilter] = useState('All');
   const [file, setFile] = useState(null);
+  const [importingMentor, setImportingMentor] = useState(false);
+  const [importingStudent, setImportingStudent] = useState(false);
   const [sortBy, setSortBy] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
   const [page, setPage] = useState(1);
-  const [dataadded, setDataadded] = useState(false);
+  const [dataadded, setDataadded] = useState(() => {
+    const storedDataAdded = localStorage.getItem('dataadded');
+    return storedDataAdded === 'true';
+  });
+  const [riskFilter, setRiskFilter] = useState('All');
   const pageSize = 10;
 
   const load = async () => {
@@ -32,7 +39,8 @@ const AdminDashboard = () => {
       .includes(search.toLowerCase());
     const matchMentor =
       mentorFilter === 'All' || (s.mentor_name || 'Unassigned') === mentorFilter;
-    return matchSearch && matchMentor;
+    const matchRisk = riskFilter === 'All' || s.risk_level === riskFilter;
+    return matchSearch && matchMentor && matchRisk;
   }).sort((a, b) => {
     const dir = sortDir === 'asc' ? 1 : -1;
     let av, bv;
@@ -94,21 +102,54 @@ const AdminDashboard = () => {
   // File import
   const handleImportstudent = async (e) => {
     e.preventDefault();
-    if (!file) return;
-    await studentAPI.importCSV(file);
-    setFile(null);
-    e.target.reset();
-    setRefresh(v => v + 1);
-    setDataadded(true);
+    if (!file) {
+      alert('Please choose a CSV file to import students.');
+      return;
+    }
+    if (user?.role !== 'Admin') {
+      alert('Only Admin users can import student data.');
+      return;
+    }
+    setImportingStudent(true);
+    try {
+      const res = await studentAPI.importCSV(file);
+      alert(res?.message || 'Students imported successfully');
+      setFile(null);
+      e.target.reset();
+      setRefresh(v => v + 1);
+      setDataadded(true);
+      localStorage.setItem('dataadded', 'true');
+    } catch (err) {
+      console.error('Student import failed', err);
+      alert(err.message || err.response?.data?.message || 'Student import failed');
+    } finally {
+      setImportingStudent(false);
+    }
   };
 
   const handleImportmentor = async (e) => {
     e.preventDefault();
-    if (!file) return;
-    await mentorAPI.importCSV(file);
-    setFile(null);
-    e.target.reset();
-    setRefresh(v => v + 1);
+    if (!file) {
+      alert('Please choose a CSV file to import mentors.');
+      return;
+    }
+    if (user?.role !== 'Admin') {
+      alert('Only Admin users can import mentors.');
+      return;
+    }
+    setImportingMentor(true);
+    try {
+      const res = await mentorAPI.importCSV(file);
+      alert(res?.message || 'Mentors imported successfully');
+      setFile(null);
+      e.target.reset();
+      setRefresh(v => v + 1);
+    } catch (err) {
+      console.error('Mentor import failed', err);
+      alert(err.message || err.response?.data?.message || 'Mentor import failed');
+    } finally {
+      setImportingMentor(false);
+    }
   };
 
   // Summary totals
@@ -125,8 +166,25 @@ const AdminDashboard = () => {
       {dataadded ? (
         <div className="min-h-screen bg-gray-50">
           <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 space-y-6">
-            <SummaryCards total={totals.total} high={totals.high} medium={totals.medium} low={totals.low} />
-
+            <SummaryCards
+              total={totals.total}
+              high={totals.high}
+              medium={totals.medium}
+              low={totals.low}
+              setRiskFilter={setRiskFilter}
+            />
+            {/* 🔹 Reset Button */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  localStorage.removeItem('dataadded'); // remove from localStorage
+                  setDataadded(false); // reset state
+                }}
+                className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md shadow"
+              >
+                Add New Data
+              </button>
+            </div>
             {/* Filters + Upload/Export */}
             <div className="bg-white rounded-lg shadow p-4 border border-gray-100 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -146,12 +204,6 @@ const AdminDashboard = () => {
                     <option key={m} value={m}>{m}</option>
                   ))}
                 </select>
-                <button
-                  onClick={() => setRefresh(v => v + 1)}
-                  className="bg-white border border-gray-300 rounded-md px-3 py-2"
-                >
-                  Refresh
-                </button>
               </div>
               <div className="flex items-center gap-3">
                   <button
@@ -180,7 +232,7 @@ const AdminDashboard = () => {
                       { key: 'roll_number', label: 'Roll' },
                       { key: 'email', label: 'Email' },
                       { key: 'attendance', label: 'Attendance' },
-                      { key: 'performance', label: 'Performance' },
+                      { key: 'backlogs', label: 'Backlogs' },
                       { key: 'mentor_name', label: 'Mentor' },
                       { key: 'risk', label: 'Risk' },
                     ].map(h => (
@@ -200,7 +252,7 @@ const AdminDashboard = () => {
                           className="inline-flex items-center gap-1"
                         >
                           {h.label}
-                          {(['name', 'attendance', 'performance', 'mentor_name', 'roll_number'].includes(h.key) &&
+                          {(['name', 'attendance', 'backlogs', 'mentor_name', 'roll_number'].includes(h.key) &&
                             sortBy === h.key) && (
                             <span>{sortDir === 'asc' ? '▲' : '▼'}</span>
                           )}
@@ -211,27 +263,29 @@ const AdminDashboard = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {current.map(s => (
-                    <tr key={s.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3">{s.name}</td>
-                      <td className="px-4 py-3">{s.roll_number || '-'}</td>
-                      <td className="px-4 py-3">{s.email || '-'}</td>
-                      <td className="px-4 py-3">{s.attendance}%</td>
-                      <td className="px-4 py-3">{s.performance ?? s.score ?? '-'}</td>
-                      <td className="px-4 py-3">{s.mentor_name || 'Unassigned'}</td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            s.risk_level === 'High'
-                              ? 'bg-red-100 text-red-800'
-                              : s.risk_level === 'Medium'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-green-100 text-green-800'
-                          }`}
-                        >
-                          {s.risk_level || (s.risk_flag ? 'At Risk' : 'OK')}
-                        </span>
-                      </td>
-                    </tr>
+                      <tr key={s.id} className="hover:bg-gray-50 transition-colors table-row">
+                        <Link style={{ color: 'blue', textDecoration: 'none' }} to={`/admin/students/${s.id}`} className="text-blue-600 hover:underline">
+                          {s.name}
+                        </Link>
+                        <td className="px-4 py-3">{s.roll_number || '-'}</td>
+                        <td className="px-4 py-3">{s.email || '-'}</td>
+                        <td className="px-4 py-3">{s.attendance}%</td>
+                        <td className="px-4 py-3">{s.backlogs ?? s.score ?? '-'}</td>
+                        <td className="px-4 py-3">{s.mentor_name || 'Unassigned'}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              s.risk_level === 'High'
+                                ? 'bg-red-100 text-red-800'
+                                : s.risk_level === 'Medium'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}
+                          >
+                            {s.risk_level || (s.risk_flag ? 'At Risk' : 'OK')}
+                          </span>
+                        </td>
+                      </tr>                                    
                   ))}
                 </tbody>
               </table>
@@ -274,8 +328,9 @@ const AdminDashboard = () => {
               <button
                 type="submit"
                 className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow"
+                disabled={importingMentor}
               >
-                Import CSV
+                {importingMentor ? 'Importing…' : 'Import CSV'}
               </button>
             </form>
           </div>
@@ -292,8 +347,9 @@ const AdminDashboard = () => {
                   <button
                     type="submit"
                     className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow"
+                    disabled={importingStudent}
                   >
-                    Import CSV
+                    {importingStudent ? 'Importing…' : 'Import CSV'}
                   </button>
                 </form>
               </div>

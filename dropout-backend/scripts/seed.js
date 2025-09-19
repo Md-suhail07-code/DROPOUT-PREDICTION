@@ -62,7 +62,10 @@ function importRows(rows, done) {
   rows.forEach(r => {
     const name = r.name || r.Name || '';
     const roll_number = r.roll_number || r.Roll || r.Roll_Number || null;
-    const attendance = parseFloat(r.attendance ?? r.Attendance ?? 0) || 0;
+  // Compute attendance: prefer Total-Held / Total-Attend if present, otherwise use attendance column
+  const totalHeld = parseInt(r['Total-Held'] ?? r['Total_Held'] ?? r.total_held ?? r.Total_Held ?? 0) || 0;
+  const totalAttend = parseInt(r['Total-Attend'] ?? r['Total_Attend'] ?? r.total_attend ?? r.Total_Attend ?? 0) || 0;
+  const attendance = totalHeld > 0 ? ((totalAttend / totalHeld) * 100).toFixed(2) : (parseFloat(r.attendance ?? r.Attendance ?? 0) || 0);
     const mentor_email = r.mentor_email || r.MentorEmail || r.mentor || null;
     const performance = perfToScore(r.performance ?? r.Performance);
     const score = performance;

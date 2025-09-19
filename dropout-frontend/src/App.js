@@ -5,6 +5,7 @@ import AuthPage from './components/auth/AuthPage';
 import AdminDashboard from './components/dashboards/AdminDashboard';
 import MentorDashboard from './components/dashboards/MentorDashboard';
 import StudentDashboard from './components/dashboards/StudentDashboard';
+import StudentDetail from './components/student';
 
 export const AuthContext = React.createContext(null);
 
@@ -57,6 +58,9 @@ function App() {
           <ProtectedRoute roles={["Student"]}>
             <StudentDashboard />
           </ProtectedRoute>
+        } />
+        <Route path="/admin/students/:id" element={
+          <StudentDetail />
         } />
         <Route path="/" element={<Navigate to={user ? `/${user.role.toLowerCase()}` : '/auth'} replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -46,8 +46,14 @@ export const studentAPI = {
     return res.data;
   },
   getMentorStudents: async () => {
-    const res = await api.get('/mentor/students');
-    return res.data;
+    try {
+      const res = await api.get('/mentor/students');
+      return res.data;
+    } catch (error) {
+      // Provide clearer message for UI
+      const msg = error.response?.data?.message || `Failed to fetch mentor students (status ${error.response?.status || 'unknown'})`;
+      throw new Error(msg);
+    }
   },
   getStudentMe: async () => {
     const res = await api.get('/student/me');
@@ -134,8 +140,27 @@ export const mentorAPI = {
   importCSV: async (file) => {
     const form = new FormData();
     form.append('file', file);
-    const res = await api.post('/admin/mentors/add', form, { headers: { 'Content-Type': 'multipart/form-data' }});
+    const res = await api.post('/admin/mentors/import', form, { headers: { 'Content-Type': 'multipart/form-data' }});
     return res.data;
+  },
+}
+
+export const adminAPI = {
+  getStudentById: async (studentId) => {
+    try {
+      const response = await api.get(`/admin/students/${studentId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch student');
+    }
+  },
+  getPredictionForStudent: async (studentId) => {
+    try {
+      const res = await api.get(`/admin/students/${studentId}/predict`);
+      return res.data;
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'Failed to get prediction');
+    }
   },
 }
 

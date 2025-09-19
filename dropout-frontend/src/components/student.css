@@ -1,0 +1,75 @@
+/* Simple student dashboard styles */
+.student-card {
+  max-width: 880px;
+  margin: 24px auto;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(21, 63, 122, 0.08);
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 18px;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+.student-main h1 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  color: #0f172a;
+}
+.student-meta {
+  color: #475569;
+  margin-bottom: 12px;
+}
+.details-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.detail-pill {
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.student-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+.stat {
+  background: #ffffff;
+  border: 1px solid #e6eef8;
+  padding: 12px;
+  border-radius: 8px;
+  flex: 1;
+  text-align: center;
+}
+.stat strong { display:block; font-size:18px; color:#0f172a }
+.mentor-card {
+  background: linear-gradient(180deg,#0ea5a9 0%, #38bdf8 100%);
+  color: white;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+.mentor-card .mentor-name { font-weight:700; font-size:18px }
+.mentor-card .mentor-email { opacity:0.95; font-size:13px }
+.risk-high { color: #b91c1c; font-weight:700 }
+.risk-medium { color: #b45309; font-weight:700 }
+.risk-low { color: #065f46; font-weight:700 }
+.loading { text-align:center; padding:40px; color:#64748b }
+.recommend-list {
+  margin: 8px 0 0 0;
+  padding-left: 18px;
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.recommend-list li {
+  margin-bottom: 6px;
+}

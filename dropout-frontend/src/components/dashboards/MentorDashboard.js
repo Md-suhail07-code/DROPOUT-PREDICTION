@@ -13,9 +13,16 @@ const MentorDashboard = () => {
 
 	useEffect(() => {
 		(async () => {
-			const res = await studentAPI.getMentorStudents();
-			setStudents(res.data);
-			setLoading(false);
+			try {
+				const res = await studentAPI.getMentorStudents();
+				setStudents(res.data);
+			} catch (err) {
+				console.error('Failed to load mentor students', err);
+				setStudents([]);
+				alert(err.message || 'Failed to load your students. Make sure you are logged in as a Mentor.');
+			} finally {
+				setLoading(false);
+			}
 		})();
 	}, []);
 

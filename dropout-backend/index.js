@@ -6,6 +6,9 @@ const jwt = require("jsonwebtoken");
 const multer = require("multer");
 // const { parse } = require("csv-parse");
 const ExcelJS = require("exceljs");
+const axios = require('axios');
+const MODEL_SERVICE_URL = process.env.MODEL_SERVICE_URL || 'http://localhost:5001';
+
 
 const app = express();
 app.use(cors());
@@ -37,13 +40,16 @@ db.serialize(() => {
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     user_id INTEGER UNIQUE,
+    department TEXT,
+    phone TEXT,
+    password TEXT,
     FOREIGN KEY(user_id) REFERENCES users(id)
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS students (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    roll_number TEXT,
+    roll_number TEXT UNIQUE,
     section TEXT,
     email TEXT,
     total_held INTEGER DEFAULT 0,
@@ -264,13 +270,52 @@ app.get("/admin/students", authenticateToken, authorizeRoles("Admin"), (req, res
   });
 });
 
+app.get("/admin/students/:id", authenticateToken, authorizeRoles("Admin"), (req, res) => { 
+  const { id } = req.params;
+  db.get(`SELECT s.*, m.name as mentor_name, m.email as mentor_email FROM students s LEFT JOIN mentors m ON s.mentor_id = m.id WHERE s.id = ?`, [id], (err, row) => {
+    if (err) return res.status(500).json({ success: false, message: "DB error", error: err.message });
+    if (!row) return res.status(404).json({ success: false, message: "Student not found" });
+    res.json({ success: true, data: row });
+  });
+});
+
+// Admin/mentor can request prediction+recommendations for a student by id
+app.get("/admin/students/:id/predict", authenticateToken, authorizeRoles("Admin","Mentor"), (req, res) => {
+  const { id } = req.params;
+  db.get(`SELECT attendance, backlogs, fee_status FROM students WHERE id = ?`, [id], async (err, row) => {
+    if (err) return res.status(500).json({ success: false, message: "DB error", error: err.message });
+    if (!row) return res.status(404).json({ success: false, message: "Student not found" });
+    try {
+      const payload = {
+        attendance: row.attendance || 0,
+        no_of_backlogs: row.backlogs || 0,
+        fee_status: row.fee_status || 'Paid'
+      };
+      const resp = await axios.post(`${MODEL_SERVICE_URL}/predict`, payload, { timeout: 10000 });
+      return res.json({ success: true, data: resp.data.data });
+    } catch (e) {
+      console.error("Model call error:", e.message || e);
+      return res.status(500).json({ success: false, message: "Model service error", error: e.message });
+    }
+  });
+});
+
+
 // Mentor: own students
 app.get("/mentor/students", authenticateToken, authorizeRoles("Mentor"), (req, res) => {
-  db.get(`SELECT id FROM mentors WHERE user_id = ?`, [req.user.id], (err, mentor) => {
-    if (err) return res.status(500).json({ success: false, message: "DB error", error: err.message });
-    if (!mentor) return res.status(404).json({ success: false, message: "Mentor profile not found" });
-    db.all(`SELECT * FROM students WHERE mentor_id = ? ORDER BY name ASC`, [mentor.id], (e2, rows) => {
-      if (e2) return res.status(500).json({ success: false, message: "Failed to fetch", error: e2.message });
+  db.get(`SELECT id, email FROM mentors WHERE email = ?`, [req.email], (err, mentor) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: "DB error", error: err.message });
+    }
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: "Mentor profile not found" });
+    }
+
+    // ✅ Use mentor.email, not just id
+    db.all(`SELECT * FROM students WHERE mentor_email = ? ORDER BY name ASC`, [mentor.email], (e2, rows) => {
+      if (e2) {
+        return res.status(500).json({ success: false, message: "Failed to fetch", error: e2.message });
+      }
       res.json({ success: true, count: rows.length, data: rows });
     });
   });
@@ -416,8 +461,10 @@ app.get("/students/low-risk", (req, res) => {
   });
 });
 
-// Add mentor (Admin only)
-app.post("/admin/mentors/add", (req, res) => {
+// =================== Mentor APIs ===================
+
+// Add mentor (Admin only - JSON)
+app.post("/admin/mentors/add", authenticateToken, authorizeRoles("Admin"), (req, res) => {
   const { name, email, department, phone, password } = req.body;
 
   if (!name || !email) {
@@ -444,6 +491,64 @@ app.post("/admin/mentors/add", (req, res) => {
     });
   });
 });
+
+
+// Import mentors from CSV (Admin only - Bulk Upload)
+app.post("/admin/mentors/import", authenticateToken, authorizeRoles("Admin"), upload.single("file"), (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, message: "No file uploaded" });
+
+  const csv = req.file.buffer.toString();
+
+  parseCSV(csv, { columns: true, skip_empty_lines: true, trim: true }, (err, rows) => {
+    if (err) return res.status(400).json({ success: false, message: "CSV parse error", error: err.message });
+
+    let processed = 0;
+    const total = rows.length;
+    if (total === 0) return res.json({ success: true, message: "No rows to import", count: 0 });
+
+    rows.forEach(r => {
+      const name = r.NAME || r.Name || r.name || "";
+      const email = r.EMAIL || r.Email || r.email || null;
+      const department = r.DEPARTMENT || r.Department || r.department || null;
+      const phone = r.PHONE || r.Phone || r.phone || null;
+      const password = r.PASSWORD || r.Password || r.password || "password123";
+
+      if (!name || !email) {
+        processed++;
+        if (processed === total) {
+          return res.status(207).json({ success: false, message: "Import completed with errors", count: total, error: "Some mentors missing required fields" });
+        }
+        return;
+      }
+
+      // Try to insert with full columns; if the table was created earlier without extra columns, fallback to (name,email)
+      db.run(
+        `INSERT OR IGNORE INTO mentors (name, email, department, phone, password)
+         VALUES (?, ?, ?, ?, ?)`,
+        [name, email, department, phone, password],
+        function (insErr) {
+          if (insErr && /no such column/i.test(insErr.message)) {
+            // fallback to minimal insert
+            db.run(`INSERT OR IGNORE INTO mentors (name, email) VALUES (?, ?)`, [name, email], (err2) => {
+              processed++;
+              if (processed === total) {
+                if (err2) return res.status(207).json({ success: false, message: "Import completed with errors", count: total, error: err2.message });
+                return res.json({ success: true, message: "Mentor import completed", count: total });
+              }
+            });
+            return;
+          }
+          processed++;
+          if (processed === total) {
+            if (insErr) return res.status(207).json({ success: false, message: "Import completed with errors", count: total, error: insErr.message });
+            return res.json({ success: true, message: "Mentor import completed", count: total });
+          }
+        }
+      );
+    });
+  });
+});
+
 
 
 // CSV import (Admin)
@@ -496,10 +601,10 @@ app.post("/admin/students/import", authenticateToken, authorizeRoles("Admin"), u
           }
           return;
         }
-        db.run(
-    `INSERT INTO students (name, roll_number, section, email, total_held, total_attend, attendance, backlogs, attempts, fee_status, score, risk_level, risk_flag)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [name, roll_number, section, email, total_held, total_attend, attendance, backlogs, attempts, fee_status, score, risk_level, risk_flag],
+    db.run(
+  `INSERT INTO students (name, roll_number, section, email, total_held, total_attend, attendance, backlogs, attempts, fee_status, score, risk_level, risk_flag, mentor_id)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  [name, roll_number, section, email, total_held, total_attend, attendance, backlogs, attempts, fee_status, score, risk_level, risk_flag, mentor_id],
     (insErr) => {
       processed++;
       if (processed === total) {
