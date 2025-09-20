@@ -7,7 +7,7 @@ const multer = require("multer");
 // const { parse } = require("csv-parse");
 const ExcelJS = require("exceljs");
 const axios = require('axios');
-const MODEL_SERVICE_URL = process.env.MODEL_SERVICE_URL || 'http://localhost:5001';
+const MODEL_SERVICE_URL = process.env.MODEL_SERVICE_URL || 'https://python-backend-2nsd.onrender.com/';
 
 
 const app = express();
