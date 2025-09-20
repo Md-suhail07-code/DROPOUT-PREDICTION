@@ -99,6 +99,11 @@ def llm_recommendations(student, risk_label):
         print(f"An error occurred with the Gemini API: {e}")
         return []
 
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"message": "Python ML Backend is running ✅"}), 200
+
+
 @app.route("/predict", methods=["POST"])
 def predict():
     """
