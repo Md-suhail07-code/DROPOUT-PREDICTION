@@ -147,7 +147,7 @@ def recommend():
     recs = []
     if GEMINI_API_KEY:
         recs = llm_recommendations(student, data.get('risk_label','Unknown'))
-    if not recs:
+    if not recs or recs == []:
         recs = generate_recommendations(student)
         
     return jsonify({"success": True, "data": {"recommendations": recs}})
