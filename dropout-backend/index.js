@@ -32,7 +32,8 @@ db.serialize(() => {
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('Admin','Mentor','Student'))
+    role TEXT NOT NULL CHECK (role IN ('Admin','Mentor','Student')),
+    isdataadded INTEGER DEFAULT 0
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS mentors (
@@ -210,13 +211,13 @@ app.post("/auth/signup", (req, res) => {
   if (!validRoles.includes(role)) return res.status(400).json({ success: false, message: "Invalid role" });
 
   const hashed = bcrypt.hashSync(password, 10);
-  const insertUser = `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`;
+  const insertUser = `INSERT INTO users (name, email, password, role, isdataadded) VALUES (?, ?, ?, ?, ?)`;
   db.run(insertUser, [name, email, hashed, role], function(err) {
     if (err) {
       return res.status(400).json({ success: false, message: "User create failed", error: err.message });
     }
 
-    const user = { id: this.lastID, name, email, role };
+    const user = { id: this.lastID, name, email, role, isdataadded: 0 };
 
     if (role === "Mentor") {
       db.run(`INSERT INTO mentors (name, email, user_id) VALUES (?, ?, ?)`, [name, email, user.id], (mErr) => {
@@ -297,6 +298,54 @@ app.get("/admin/students/:id/predict", authenticateToken, authorizeRoles("Admin"
       console.error("Model call error:", e.message || e);
       return res.status(500).json({ success: false, message: "Model service error", error: e.message });
     }
+  });
+});
+
+app.get("/admin/isdataadded", authenticateToken, authorizeRoles("Admin"), (req, res) => {
+  const userId = req.user.id;
+
+  db.get(`SELECT isdataadded FROM users WHERE id = ?`, [userId], (err, row) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: "DB error", error: err.message });
+    }
+
+    if (!row) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    // Return the current status
+    res.status(200).json({ success: true, isdataadded: row.isdataadded });
+  });
+});
+
+app.put("/admin/toggle-data-added", authenticateToken, authorizeRoles("Admin"), (req, res) => {
+  const userId = req.user.id;
+
+  // First, get the current value of isdataadded
+  db.get(`SELECT isdataadded FROM users WHERE id = ?`, [userId], (err, row) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: "DB error", error: err.message });
+    }
+
+    if (!row) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    // Determine the new value (toggle 1 to 0 or 0 to 1)
+    const newStatus = row.isdataadded === 1 ? 0 : 1;
+
+    // Now, update the value in the database
+    db.run(`UPDATE users SET isdataadded = ? WHERE id = ?`, [newStatus, userId], function(err) {
+      if (err) {
+        return res.status(500).json({ success: false, message: "DB error", error: err.message });
+      }
+
+      if (this.changes === 0) {
+        return res.status(404).json({ success: false, message: "User not found or no changes made." });
+      }
+
+      res.status(200).json({ success: true, message: `isdataadded updated to ${newStatus}.` });
+    });
   });
 });
 

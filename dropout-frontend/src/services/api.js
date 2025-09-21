@@ -1,6 +1,6 @@
 import axios from 'axios';
 const port = process.env.PORT || 5000;
-const API_BASE_URL = 'https://dropout-backend-vyrv.onrender.com';
+const API_BASE_URL = 'http://localhost:5000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -162,6 +162,27 @@ export const adminAPI = {
       throw new Error(err.response?.data?.message || 'Failed to get prediction');
     }
   },
-}
+
+  // Fetch whether data has been added (returns { isdataadded: true/false })
+  getDataAddedStatus: async () => {
+    try {
+      const response = await api.get('/admin/isdataadded');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch data added status');
+    }
+  },
+
+  // Set data added status. Backend should accept a POST or PUT to update the admin user's isdataadded flag.
+  // We'll try PUT to /admin/isdataadded with { isdataadded: true/false }
+  setDataAddedStatus: async (value) => {
+    try {
+      const response = await api.put('/admin/toggle-data-added', { isdataadded: !!value });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to set data added status');
+    }
+  }
+};
 
 export default api;

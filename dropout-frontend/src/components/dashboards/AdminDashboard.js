@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../App';
-import { studentAPI, mentorAPI, } from '../../services/api';
+import { studentAPI, mentorAPI, adminAPI } from '../../services/api';
 import TopNav from '../common/TopNav';
 import SummaryCards from '../common/SummaryCards';
 import './index.css'
@@ -18,10 +18,8 @@ const AdminDashboard = () => {
   const [sortBy, setSortBy] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
   const [page, setPage] = useState(1);
-  const [dataadded, setDataadded] = useState(() => {
-    const storedDataAdded = localStorage.getItem('dataadded');
-    return storedDataAdded === 'true';
-  });
+  // `null` = loading, `false` = not added, `true` = added
+  const [dataadded, setDataadded] = useState(null);
   const [riskFilter, setRiskFilter] = useState('All');
   const pageSize = 10;
 
@@ -31,6 +29,29 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => { load(); }, [refresh]);
+
+  // Load whether data has been added from backend
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await adminAPI.getDataAddedStatus();
+        // backend expected to return { isdataadded: true/false } or similar
+        if (mounted) {
+          const val = res;
+          // If backend returns a bare boolean, use it. If it returns an object, look for common keys.
+          const parsed = typeof val === 'boolean'
+            ? val
+            : Boolean(val?.isdataadded ?? val?.isDataAdded ?? val?.dataadded ?? false);
+          setDataadded(parsed);
+        }
+      } catch (err) {
+        console.error('Failed to fetch dataadded status', err);
+        if (mounted) setDataadded(false); // safe fallback: allow import UI
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   // Filtering + sorting
   const filtered = students.filter(s => {
@@ -117,8 +138,12 @@ const AdminDashboard = () => {
       setFile(null);
       e.target.reset();
       setRefresh(v => v + 1);
+      // Optimistically update UI immediately so dashboard tab appears
       setDataadded(true);
-      localStorage.setItem('dataadded', 'true');
+      // Update server-side flag in background; don't block UI on this
+      adminAPI.setDataAddedStatus(true).catch(err => {
+        console.error('Failed to update server dataadded flag', err);
+      });
     } catch (err) {
       console.error('Student import failed', err);
       alert(err.message || err.response?.data?.message || 'Student import failed');
@@ -177,8 +202,17 @@ const AdminDashboard = () => {
             <div className="flex justify-end">
               <button
                 onClick={() => {
-                  localStorage.removeItem('dataadded'); // remove from localStorage
-                  setDataadded(false); // reset state
+                  // clear server-side flag so admin can add new data again
+                  (async () => {
+                    try {
+                      await adminAPI.setDataAddedStatus(false);
+                      setDataadded(false);
+                    } catch (err) {
+                      console.error('Failed to clear dataadded flag', err);
+                      // fallback to local state change
+                      setDataadded(false);
+                    }
+                  })();
                 }}
                 className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md shadow"
               >
