@@ -42,7 +42,7 @@ function App() {
 
   return (
     <AuthContext.Provider value={authValue}>
-      <Routes>
+      <Routes basename="/tothepoint_login">
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/admin" element={
           <ProtectedRoute roles={["Admin"]}>
