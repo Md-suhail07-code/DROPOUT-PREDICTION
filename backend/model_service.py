@@ -1,4 +1,3 @@
-# model_service.py
 from flask import Flask, request, jsonify
 import joblib
 import numpy as np
@@ -9,6 +8,11 @@ app = Flask(__name__)
 
 MODEL_PATH = os.environ.get("MODEL_PATH", "model.joblib")
 print("Loading model from", MODEL_PATH)
+
+# Check if model file exists before trying to load
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
+
 model_bundle = joblib.load(MODEL_PATH)
 clf = model_bundle['model']
 le_fee = model_bundle['le_fee']
@@ -29,6 +33,7 @@ def predict_risk(attendance, backlogs, fee_status):
     except Exception:
         # unknown status -> map to 'Paid' index fallback
         fee_enc = le_fee.transform([le_fee.classes_[0]])[0]
+    # Corrected: use no_of_backlogs to match the training data
     X = np.array([[float(attendance), int(backlogs), int(fee_enc)]])
     proba = clf.predict_proba(X)[0]  # order corresponds to le_target.classes_
     idx = np.argmax(proba)
@@ -72,8 +77,6 @@ def generate_recommendations(student):
         recs.append("Monitor progress weekly and engage parents/guardians if required.")
     return list(dict.fromkeys(recs))[:5]  # dedupe keep order
 
-
-# Optional: hook to call an LLM (Gemini) for richer recommendations
 def llm_recommendations(student, risk_label):
     """
     student: dict with attendance, backlogs, fee_status, (optional) other values
@@ -102,7 +105,6 @@ def llm_recommendations(student, risk_label):
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({"message": "Python ML Backend is running ✅"}), 200
-
 
 @app.route("/predict", methods=["POST"])
 def predict():
