@@ -7,7 +7,7 @@ const multer = require("multer");
 // const { parse } = require("csv-parse");
 const ExcelJS = require("exceljs");
 const axios = require('axios');
-const MODEL_SERVICE_URL = process.env.MODEL_SERVICE_URL || 'http://127.0.0.1:5001';
+const MODEL_SERVICE_URL = 'https://python-backend-2nsd.onrender.com';
 
 
 const app = express();
@@ -202,43 +202,56 @@ function validateStudent(req, res, next) {
 // Add this helper function somewhere in your index.js
 function generateFallbackRecommendations(studentData) {
   const { attendance, backlogs, fee_status } = studentData;
-  const recs = [];
+  const recs = new Set(); // Use a Set to handle deduplication automatically
 
-  // Rule-based recommendations based on attendance
+  // Attendance-based recommendations
   if (attendance < 60) {
-    recs.push("Immediate one-on-one mentoring: arrange weekly meetings with mentor to address attendance barriers.");
-    recs.push("Make attendance recovery plan: mandatory remedial classes and a daily roll-call for 2 weeks.");
+    recs.add("Immediate one-on-one mentoring: arrange weekly meetings with mentor to address attendance barriers.");
+    recs.add("Make attendance recovery plan: mandatory remedial classes and a daily roll-call for 2 weeks.");
+    recs.add("Explore personal and family issues that might be contributing to attendance problems.");
   } else if (attendance < 75) {
-    recs.push("Encourage class participation and set a short-term attendance target (e.g., +10% in 1 month).");
+    recs.add("Encourage class participation and set a short-term attendance target (e.g., +10% in 1 month).");
+    recs.add("Connect the student with a peer-tutor or study group to build a sense of community.");
+    recs.add("Highlight the correlation between class attendance and overall academic success.");
   } else {
-    recs.push("Maintain consistent attendance and encourage peer-study groups.");
+    recs.add("Maintain consistent attendance and encourage peer-study groups.");
+    recs.add("Recognize and reward the student for their strong attendance record to reinforce positive behavior.");
   }
 
-  // Rule-based recommendations based on backlogs
+  // Backlogs-based recommendations
   if (backlogs >= 3) {
-    recs.push("Prioritise backlog clearance: enroll in targeted remedial courses and set exam plan to clear backlogs.");
+    recs.add("Prioritise backlog clearance: enroll in targeted remedial courses and set a structured exam plan.");
+    recs.add("Schedule a meeting with the student and department head to create a realistic academic plan.");
+    recs.add("Offer specialized academic counseling to address specific learning difficulties.");
   } else if (backlogs === 2) {
-    recs.push("Book extra practice sessions and pair with a high-performing peer for problem solving.");
+    recs.add("Book extra practice sessions and pair with a high-performing peer for problem solving.");
+    recs.add("Provide revision materials and short quizzes to quickly close the backlogs.");
+    recs.add("Conduct a diagnostic assessment to identify foundational knowledge gaps.");
   } else if (backlogs === 1) {
-    recs.push("Provide revision materials and short quizzes to quickly close the backlog.");
+    recs.add("Provide revision materials and short quizzes to quickly close the backlog.");
+    recs.add("Offer a one-on-one session with a subject matter expert to clear doubts.");
+    recs.add("Encourage the student to attempt a mock exam to gauge their preparedness.");
   }
 
-  // Rule-based recommendations based on fee status
+  // Fee status-based recommendations
   if (fee_status === 'Overdue') {
-    recs.push("Financial counseling and fee installment plan: connect student with accounts to discuss options.");
-  } else if (fee_status === 'Pending') {
-    recs.push("Send reminders and offer short grace period or instalment options to reduce stress.");
+    recs.add("Financial counseling and fee installment plan: connect student with accounts to discuss options.");
+    recs.add("Provide information on available scholarships or financial aid programs.");
+    recs.add("Ensure communication with family is handled with sensitivity and discretion.");
+  } else if (fee_status === 'Pending' || fee_status === 'Partial') {
+    recs.add("Send reminders and offer short grace period or instalment options to reduce stress.");
+    recs.add("Offer flexible payment deadlines or alternative payment methods.");
+    recs.add("Address any non-financial issues that might be affecting fee payment.");
   }
   
-  // Add a generic suggestion if there are too few recommendations
-  if (recs.length < 3) {
-    recs.push("Monitor progress weekly and engage parents/guardians if required.");
-  }
+  // Generic recommendations for a more comprehensive feel
+  recs.add("Encourage the student to participate in extracurricular activities to reduce stress and improve mental health.");
+  recs.add("Monitor the student's progress weekly and engage parents/guardians if required.");
+  recs.add("Suggest a meeting with a mental health counselor to discuss any personal challenges.");
 
-  // Deduplicate and return the list
-  return [...new Set(recs)].slice(0, 5);
+  // Convert to an array and return the first 5 unique recommendations
+  return Array.from(recs).slice(0, 5);
 }
-
 // Routes
 
 // Auth routes
