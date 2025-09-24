@@ -23,3 +23,10 @@
 .table-row{
   text-align: left;
 }
+
+.link {
+  text-decoration: none;
+  color: rgb(0, 130, 252);
+  font-weight: bold;
+  cursor: pointer;
+}
