@@ -4,6 +4,7 @@ import { AuthContext } from '../../App';
 import { studentAPI, mentorAPI, adminAPI } from '../../services/api';
 import TopNav from '../common/TopNav';
 import SummaryCards from '../common/SummaryCards';
+import CircularProgress from '../common/CircularProgress';
 import './index.css'
 
 const AdminDashboard = () => {
@@ -276,6 +277,7 @@ const AdminDashboard = () => {
                       { key: 'email', label: 'Email' },
                       { key: 'attendance', label: 'Attendance' },
                       { key: 'backlogs', label: 'Backlogs' },
+                      { key: 'fee_status', label: 'Fee Status' },
                       { key: 'mentor_name', label: 'Mentor' },
                       { key: 'risk', label: 'Risk' },
                     ].map(h => (
@@ -314,8 +316,22 @@ const AdminDashboard = () => {
                       </td>
                       <td className="px-4 py-3">{s.roll_number || '-'}</td>
                       <td className="px-4 py-3">{s.email || '-'}</td>
-                      <td className="px-4 py-3">{s.attendance}%</td>
+                      <td className="px-4 py-3">
+                        <CircularProgress value={s.attendance} size={48} stroke={5} />
+                      </td>
                       <td className="px-4 py-3">{s.backlogs ?? s.score ?? '-'}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${s.fee_status === "Paid"
+                            ? "bg-green-100 text-green-800"
+                            : s.fee_status === "Pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                            }`}
+                        >
+                          {s.fee_status}
+                        </span>
+                      </td>
                       <td className="px-4 py-3">{s.mentor_name || 'Unassigned'}</td>
                       <td className="px-4 py-3">
                         <span
