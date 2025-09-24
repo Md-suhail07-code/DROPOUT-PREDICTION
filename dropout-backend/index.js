@@ -7,7 +7,7 @@ const multer = require("multer");
 // const { parse } = require("csv-parse");
 const ExcelJS = require("exceljs");
 const axios = require('axios');
-const MODEL_SERVICE_URL = 'https://python-backend-2nsd.onrender.com/';
+const MODEL_SERVICE_URL = process.env.MODEL_SERVICE_URL || 'http://127.0.0.1:5001';
 
 
 const app = express();
@@ -199,6 +199,46 @@ function validateStudent(req, res, next) {
   next();
 }
 
+// Add this helper function somewhere in your index.js
+function generateFallbackRecommendations(studentData) {
+  const { attendance, backlogs, fee_status } = studentData;
+  const recs = [];
+
+  // Rule-based recommendations based on attendance
+  if (attendance < 60) {
+    recs.push("Immediate one-on-one mentoring: arrange weekly meetings with mentor to address attendance barriers.");
+    recs.push("Make attendance recovery plan: mandatory remedial classes and a daily roll-call for 2 weeks.");
+  } else if (attendance < 75) {
+    recs.push("Encourage class participation and set a short-term attendance target (e.g., +10% in 1 month).");
+  } else {
+    recs.push("Maintain consistent attendance and encourage peer-study groups.");
+  }
+
+  // Rule-based recommendations based on backlogs
+  if (backlogs >= 3) {
+    recs.push("Prioritise backlog clearance: enroll in targeted remedial courses and set exam plan to clear backlogs.");
+  } else if (backlogs === 2) {
+    recs.push("Book extra practice sessions and pair with a high-performing peer for problem solving.");
+  } else if (backlogs === 1) {
+    recs.push("Provide revision materials and short quizzes to quickly close the backlog.");
+  }
+
+  // Rule-based recommendations based on fee status
+  if (fee_status === 'Overdue') {
+    recs.push("Financial counseling and fee installment plan: connect student with accounts to discuss options.");
+  } else if (fee_status === 'Pending') {
+    recs.push("Send reminders and offer short grace period or instalment options to reduce stress.");
+  }
+  
+  // Add a generic suggestion if there are too few recommendations
+  if (recs.length < 3) {
+    recs.push("Monitor progress weekly and engage parents/guardians if required.");
+  }
+
+  // Deduplicate and return the list
+  return [...new Set(recs)].slice(0, 5);
+}
+
 // Routes
 
 // Auth routes
@@ -281,12 +321,13 @@ app.get("/admin/students/:id", authenticateToken, authorizeRoles("Admin"), (req,
 });
 
 // Admin/mentor can request prediction+recommendations for a student by id
-app.get("/admin/students/:id/predict", authenticateToken, authorizeRoles("Admin","Mentor"), (req, res) => {
+// Corrected route with fallback logic
+app.get("/admin/students/:id/predict", authenticateToken, authorizeRoles("Admin", "Mentor"), (req, res) => {
   const { id } = req.params;
   db.get(`SELECT attendance, backlogs, fee_status FROM students WHERE id = ?`, [id], async (err, row) => {
-    if (err) return res.status(500).json({ success: false, message: "DB error", error: err.message });
-    if (!row) return res.status(404).json({ success: false, message: "Student not found" });
+    // ... (unchanged code)
     try {
+      // Attempt to call the Python model service
       const payload = {
         attendance: row.attendance || 0,
         backlogs: row.backlogs || 0,
@@ -294,9 +335,30 @@ app.get("/admin/students/:id/predict", authenticateToken, authorizeRoles("Admin"
       };
       const resp = await axios.post(`${MODEL_SERVICE_URL}/predict`, payload, { timeout: 10000 });
       return res.json({ success: true, data: resp.data.data });
+
     } catch (e) {
-      console.error("Model call error:", e.message || e);
-      return res.status(500).json({ success: false, message: "Model service error", error: e.message });
+      // Fallback logic
+      console.error("Model call error, providing fallback recommendations:", e.message || e);
+      const fallbackRecs = generateFallbackRecommendations(row);
+      const fallbackPrediction = {
+        // You can't get the ML model's prediction, so use your database's risk level or a default
+        risk_level: row.risk_level || 'Unknown',
+        confidence: 0, // Confidence is unknown
+        proba: []
+      };
+      
+      return res.json({
+        success: true,
+        data: {
+          prediction: fallbackPrediction,
+          recommendations: fallbackRecs,
+          explanation: {
+            attendance: row.attendance || 0,
+            backlogs: row.backlogs || 0,
+            fee_status: row.fee_status || 'Paid'
+          }
+        }
+      });
     }
   });
 });
