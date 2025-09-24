@@ -322,7 +322,7 @@ const AdminDashboard = () => {
                       <td className="px-4 py-3">{s.backlogs ?? s.score ?? '-'}</td>
                       <td className="px-4 py-3">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs ${s.fee_status === "Paid"
+                          className={`px-2 py-1 rounded-full text-sm font-semibold ${s.fee_status === "Paid"
                             ? "bg-green-100 text-green-800"
                             : s.fee_status === "Pending"
                               ? "bg-yellow-100 text-yellow-800"
@@ -335,7 +335,7 @@ const AdminDashboard = () => {
                       <td className="px-4 py-3">{s.mentor_name || 'Unassigned'}</td>
                       <td className="px-4 py-3">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs ${s.risk_level === 'High'
+                          className={`px-2 py-1 rounded-full text-sm font-semibold ${s.risk_level === 'High'
                             ? 'bg-red-100 text-red-800'
                             : s.risk_level === 'Medium'
                               ? 'bg-yellow-100 text-yellow-800'
