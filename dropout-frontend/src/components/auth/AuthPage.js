@@ -40,7 +40,6 @@ const AuthPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full bg-white p-8 rounded-xl shadow">
         <h2 className="text-2xl font-bold text-center text-gray-900">{isSignup ? 'Create account' : 'Sign in'}</h2>
-        <p className="text-center text-gray-500 mt-1">Choose your role and continue</p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {isSignup && (
             <div>
