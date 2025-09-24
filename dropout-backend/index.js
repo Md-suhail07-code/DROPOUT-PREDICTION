@@ -289,7 +289,7 @@ app.get("/admin/students/:id/predict", authenticateToken, authorizeRoles("Admin"
     try {
       const payload = {
         attendance: row.attendance || 0,
-        no_of_backlogs: row.backlogs || 0,
+        backlogs: row.backlogs || 0,
         fee_status: row.fee_status || 'Paid'
       };
       const resp = await axios.post(`${MODEL_SERVICE_URL}/predict`, payload, { timeout: 10000 });
