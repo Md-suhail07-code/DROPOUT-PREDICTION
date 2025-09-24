@@ -298,9 +298,11 @@ const AdminDashboard = () => {
                 <tbody className="divide-y divide-gray-200">
                   {current.map(s => (
                       <tr key={s.id} className="hover:bg-gray-50 transition-colors table-row">
-                        <Link style={{ color: 'blue', textDecoration: 'none' }} to={`/admin/students/${s.id}`} className="text-blue-600 hover:underline">
-                          {s.name}
-                        </Link>
+                        <td className="px-4 py-3">
+                          <Link to={`/admin/students/${s.id}`} className="link">
+                            {s.name}
+                          </Link>
+                        </td>
                         <td className="px-4 py-3">{s.roll_number || '-'}</td>
                         <td className="px-4 py-3">{s.email || '-'}</td>
                         <td className="px-4 py-3">{s.attendance}%</td>
