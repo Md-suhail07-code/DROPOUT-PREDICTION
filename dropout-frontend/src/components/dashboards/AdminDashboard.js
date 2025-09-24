@@ -19,6 +19,7 @@ const AdminDashboard = () => {
   const [sortDir, setSortDir] = useState('asc');
   const [page, setPage] = useState(1);
   // `null` = loading, `false` = not added, `true` = added
+  const [loading, setLoading] = useState(true);
   const [dataadded, setDataadded] = useState(null);
   const [riskFilter, setRiskFilter] = useState('All');
   const pageSize = 10;
@@ -35,23 +36,27 @@ const AdminDashboard = () => {
     let mounted = true;
     (async () => {
       try {
+        setLoading(true);
         const res = await adminAPI.getDataAddedStatus();
         // backend expected to return { isdataadded: true/false } or similar
         if (mounted) {
           const val = res;
           // If backend returns a bare boolean, use it. If it returns an object, look for common keys.
-          const parsed = typeof val === 'boolean'
-            ? val
-            : Boolean(val?.isdataadded ?? val?.isDataAdded ?? val?.dataadded ?? false);
+          const parsed = typeof val === 'boolean' ? val : Boolean(val?.isdataadded ?? val?.isDataAdded ?? val?.dataadded ?? false);
           setDataadded(parsed);
         }
       } catch (err) {
         console.error('Failed to fetch dataadded status', err);
         if (mounted) setDataadded(false); // safe fallback: allow import UI
+      } finally {
+        setLoading(false);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
+
 
   // Filtering + sorting
   const filtered = students.filter(s => {
@@ -188,7 +193,11 @@ const AdminDashboard = () => {
   return (
     <>
       <TopNav title="Admin Dashboard" />
-      {dataadded ? (
+      {loading ? (
+        <div className="flex justify-center items-center h-screen">
+          <h1 className="head">Loading...</h1>
+        </div>
+      ) : dataadded ? (
         <div className="min-h-screen bg-gray-50">
           <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 space-y-6">
             <SummaryCards
@@ -240,7 +249,7 @@ const AdminDashboard = () => {
                 </select>
               </div>
               <div className="flex items-center gap-3">
-                  <button
+                <button
                   onClick={handleExportCSV}
                   className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow"
                 >
@@ -253,7 +262,7 @@ const AdminDashboard = () => {
                   Export Excel
                 </button>
               </div>
-              
+
             </div>
 
             {/* Students Table */}
@@ -288,8 +297,8 @@ const AdminDashboard = () => {
                           {h.label}
                           {(['name', 'attendance', 'backlogs', 'mentor_name', 'roll_number'].includes(h.key) &&
                             sortBy === h.key) && (
-                            <span>{sortDir === 'asc' ? '▲' : '▼'}</span>
-                          )}
+                              <span>{sortDir === 'asc' ? '▲' : '▼'}</span>
+                            )}
                         </button>
                       </th>
                     ))}
@@ -297,31 +306,30 @@ const AdminDashboard = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {current.map(s => (
-                      <tr key={s.id} className="hover:bg-gray-50 transition-colors table-row">
-                        <td className="px-4 py-3">
-                          <Link to={`/admin/students/${s.id}`} className="link">
-                            {s.name}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-3">{s.roll_number || '-'}</td>
-                        <td className="px-4 py-3">{s.email || '-'}</td>
-                        <td className="px-4 py-3">{s.attendance}%</td>
-                        <td className="px-4 py-3">{s.backlogs ?? s.score ?? '-'}</td>
-                        <td className="px-4 py-3">{s.mentor_name || 'Unassigned'}</td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              s.risk_level === 'High'
-                                ? 'bg-red-100 text-red-800'
-                                : s.risk_level === 'Medium'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-green-100 text-green-800'
+                    <tr key={s.id} className="hover:bg-gray-50 transition-colors table-row">
+                      <td className="px-4 py-3">
+                        <Link to={`/admin/students/${s.id}`} className="link">
+                          {s.name}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3">{s.roll_number || '-'}</td>
+                      <td className="px-4 py-3">{s.email || '-'}</td>
+                      <td className="px-4 py-3">{s.attendance}%</td>
+                      <td className="px-4 py-3">{s.backlogs ?? s.score ?? '-'}</td>
+                      <td className="px-4 py-3">{s.mentor_name || 'Unassigned'}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${s.risk_level === 'High'
+                            ? 'bg-red-100 text-red-800'
+                            : s.risk_level === 'Medium'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-green-100 text-green-800'
                             }`}
-                          >
-                            {s.risk_level || (s.risk_flag ? 'At Risk' : 'OK')}
-                          </span>
-                        </td>
-                      </tr>                                    
+                        >
+                          {s.risk_level || (s.risk_flag ? 'At Risk' : 'OK')}
+                        </span>
+                      </td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -380,15 +388,15 @@ const AdminDashboard = () => {
                 onChange={e => setFile(e.target.files?.[0] || null)}
                 className="border-gray-300 rounded-md"
               />
-                  <button
-                    type="submit"
-                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow"
-                    disabled={importingStudent}
-                  >
-                    {importingStudent ? 'Importing…' : 'Import CSV'}
-                  </button>
-                </form>
-              </div>
+              <button
+                type="submit"
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow"
+                disabled={importingStudent}
+              >
+                {importingStudent ? 'Importing…' : 'Import CSV'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </>
