@@ -131,7 +131,7 @@ def predict():
     recs = []
     if GEMINI_API_KEY:
         recs = llm_recommendations(explanation, pred['risk_level'])
-    if not recs:
+    if not recs or recs == []:
         recs = generate_recommendations(explanation)
         
     return jsonify({"success": True, "data": {"prediction": pred, "recommendations": recs, "explanation": explanation}})
