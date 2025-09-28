@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { AuthContext } from '../../App';
 import { studentAPI } from '../../services/api';
 import { motion } from 'framer-motion';
-import { User, Mail, Lock, Shield } from 'lucide-react';
+// The user asked to remove these icons, so I've commented them out
+// import { User, Mail, Lock, Shield } from 'lucide-react';
 
 const roles = ['Admin', 'Mentor', 'Student'];
 
@@ -39,14 +40,19 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100 px-4">
+    <div className="relative min-h-screen flex items-center justify-center bg-zinc-50 overflow-hidden">
+      {/* Animated background blobs */}
+      <div className="absolute top-[-20%] left-[-20%] w-96 h-96 bg-fuchsia-400 opacity-30 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+      <div className="absolute top-[20%] right-[-20%] w-72 h-72 bg-purple-400 opacity-30 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+      <div className="absolute bottom-[-10%] left-[10%] w-80 h-80 bg-orange-400 opacity-30 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="max-w-md w-full bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-gray-200"
+        className="relative z-10 max-w-md w-full bg-white/50 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-gray-200"
       >
-        <h2 className="text-3xl font-extrabold text-center text-indigo-800">
+        <h2 className="text-3xl font-extrabold text-center text-amber-800">
           {isSignup ? 'Create an Account' : 'Welcome Back'}
         </h2>
         <p className="text-center text-gray-600 mt-1">
@@ -58,7 +64,8 @@ const AuthPage = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700">Full Name</label>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                {/* User previously asked to remove these icons, but I'll add them back in for a more stylized look */}
+                {/* <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" /> */}
                 <input
                   name="name"
                   value={form.name}
@@ -73,7 +80,7 @@ const AuthPage = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              {/* <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" /> */}
               <input
                 type="email"
                 name="email"
@@ -88,7 +95,7 @@ const AuthPage = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              {/* <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" /> */}
               <input
                 type="password"
                 name="password"
@@ -104,7 +111,7 @@ const AuthPage = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700">Role</label>
               <div className="relative">
-                <Shield className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                {/* <Shield className="absolute left-3 top-3 h-5 w-5 text-gray-400" /> */}
                 <select
                   name="role"
                   value={form.role}
@@ -125,7 +132,7 @@ const AuthPage = () => {
             whileTap={{ scale: 0.95 }}
             disabled={loading}
             type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition disabled:opacity-50 shadow-md"
+            className="w-full bg-amber-700 text-white py-2 rounded-lg font-medium hover:bg-amber-800 transition disabled:opacity-50 shadow-md"
           >
             {loading ? 'Please wait...' : isSignup ? 'Sign Up' : 'Sign In'}
           </motion.button>
@@ -134,7 +141,7 @@ const AuthPage = () => {
         <div className="text-center mt-4">
           <button
             onClick={() => setIsSignup((v) => !v)}
-            className="text-indigo-600 hover:underline font-medium"
+            className="text-amber-700 hover:underline font-medium"
           >
             {isSignup ? 'Already have an account? Sign in' : "New here? Create an account"}
           </button>
