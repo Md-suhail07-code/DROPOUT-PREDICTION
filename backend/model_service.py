@@ -21,7 +21,7 @@ label_map = model_bundle.get('label_map', None)
 
 # --- GEMINI API CONFIGURATION START ---
 # Get the Gemini API key from environment variables
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or "AIzaSyBApxp5VRAjGU53vRvlMxLmHHXaJZxMcPU"
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 # --- GEMINI API CONFIGURATION END ---
@@ -86,16 +86,26 @@ def llm_recommendations(student, risk_label):
     try:
         model = genai.GenerativeModel("models/gemini-2.5-flash") 
         prompt = f"""
-        You are an experienced educational counselor. Analyze the following student details and provide 4 highly personalized recommendations. 
-        Each recommendation should be concise (1 sentence), practical, and directly address the student’s unique situation. 
-        Make sure to reference their attendance, backlog subjects, fee status, and predicted dropout risk level when giving advice. 
-        Write in an empathetic, motivating tone that encourages improvement.
+        You are an expert academic counselor AI for the ‘stepup early warning system’ platform. Your task is to provide a concise, empathetic, and actionable set of insights for a mentor reviewing a student's profile.
 
-        Student details:
-        - Attendance: {student.get('attendance')}
-        - Backlogs: {student.get('backlogs')}
-        - Fee status: {student.get('fee_status')}
-        - Predicted risk: {risk_label}
+        *First, perform a "Situation Analysis" in one sentence.* Based on all the data, what is the student's primary challenge right now?
+
+        *Second, provide personalized recommendations based on your analysis, formatted in Markdown under the following three categories:*
+        - ### ⚡ Immediate Actions: What should the mentor do in the next 48 hours? (1-2 points)
+        - ### 📚 Academic Support: What academic resources or strategies should be suggested? (1-2 points)
+        - ### ❤ Personal Well-being: What general advice can be given for the student's well-being? (1 point)
+
+        *Crucially, you MUST use the student's specific data points (attendance, backlogs, etc.) to make your recommendations feel personal and data-driven.*
+
+        ---
+        *Student Data:*
+        - *Attendance:* {student.get('attendance')}%
+        - *Backlogs:* {student.get('backlogs')} subjects
+        - *Fee Status:* {student.get('fee_status')}
+        - *Predicted Risk:* {risk_label}
+        ---
+
+        Generate the analysis and recommendations now.
         """
         response = model.generate_content(prompt)
         txt = response.text.strip()

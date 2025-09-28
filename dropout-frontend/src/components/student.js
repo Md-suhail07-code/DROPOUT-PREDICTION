@@ -101,6 +101,7 @@ const StudentDetail = () => {
     const [loadingRec, setLoadingRec] = useState(false);
     const [recError, setRecError] = useState(null);
     const [notifyMessage, setNotifyMessage] = useState(null);
+    const [autoNotifyShown, setAutoNotifyShown] = useState(false);
     const [planModalOpen, setPlanModalOpen] = useState(false);
     const [planGenerating, setPlanGenerating] = useState(false);
     const [generatedPlan, setGeneratedPlan] = useState(null);
@@ -182,6 +183,25 @@ const StudentDetail = () => {
             fetchRecommendations();
         }
     }, [student]);
+
+    // Auto-notify mentor when student's risk score is high (>70)
+    useEffect(() => {
+        if (autoNotifyShown) return;
+        // need student and prediction (prediction may be null, that's fine)
+        if (!student) return;
+
+        const predScore = normalizeRiskScoreFromPrediction(prediction?.risk_score);
+        const perfVal = student.performance ?? student.score;
+        const perfNum = performanceToScoreFrontend(perfVal);
+        const computed = calculateRiskScoreFrontend(student.attendance, perfNum, student.fee_status);
+        const score = predScore ?? computed;
+
+        if (score > 70) {
+            setNotifyMessage('Mentor Notified');
+            setAutoNotifyShown(true);
+            setTimeout(() => setNotifyMessage(null), 3000);
+        }
+    }, [student, prediction, autoNotifyShown]);
 
     if (loadingStudent) {
         return <div className="text-center text-gray-500 mt-10 p-10 bg-white shadow-lg mx-auto max-w-lg rounded-xl">Loading student details...</div>;
@@ -332,16 +352,30 @@ const StudentDetail = () => {
                     ) : recError ? (
                         <p className="py-4 text-center text-red-500 font-medium">{recError}</p>
                     ) : recommendations && recommendations.length > 0 ? (
-                        <ul className="mt-4 list-disc space-y-3 pl-5 text-gray-700">
+                        <ul className="grid gap-4 mt-6">
                             {recommendations.map((r, i) => {
-                                if (typeof r === 'string') return <li key={i}>{r}</li>;
-                                if (r && r.title) return (
-                                    <li key={i} className="py-2 px-4 bg-gray-50 rounded-md shadow-sm border border-gray-200 leading-relaxed">
-                                        <strong className="text-gray-900">{r.title}</strong>{r.detail ? ` — ${r.detail}` : null}
+                                // Handle both simple strings and objects with title/detail
+                                const recommendationText = typeof r === 'string' ? r : r.title;
+                                const detailText = r.detail;
+
+                                return (
+                                    <li
+                                        key={i}
+                                        className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300 transform hover:-translate-y-1 border border-gray-100"
+                                    >
+                                        <div className="flex items-start">
+                                            <span className="flex-shrink-0 text-blue-500 mr-4">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M18 14h.01" />
+                                                </svg>
+                                            </span>
+                                            <p className="text-gray-800 font-medium">
+                                                {recommendationText}
+                                                {detailText && <span className="text-gray-500 font-normal"> — {detailText}</span>}
+                                            </p>
+                                        </div>
                                     </li>
                                 );
-                                return <li key={i} className="py-2 px-4 bg-gray-50 rounded-md shadow-sm border border-gray-200 leading-relaxed"
-                                >{JSON.stringify(r)}</li>;
                             })}
                         </ul>
                     ) : (
