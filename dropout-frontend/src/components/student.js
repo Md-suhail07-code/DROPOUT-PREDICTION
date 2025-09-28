@@ -379,31 +379,48 @@ const StudentDetail = () => {
                         <p className="py-4 text-center text-red-500 font-medium">{recError}</p>
                     ) : recommendations && recommendations.length > 0 ? (
                         <ul className="grid gap-4 mt-6">
-                            {recommendations.map((r, i) => {
-                                // Handle both simple strings and objects with title/detail
-                                const recommendationText = typeof r === 'string' ? r : r.title;
-                                const detailText = r.detail;
+                                    {recommendations.map((item, i) => {
+                                        // Check if the item is a header
+                                        if (typeof item === 'string') {
+                                            if (item.startsWith('###')) {
+                                                // Render as a sub-header
+                                                return (
+                                                    <h3 key={i} className="text-xl font-bold text-gray-900 mt-6 -mb-2">
+                                                        {item.substring(3).trim()}
+                                                    </h3>
+                                                );
+                                            }
+                                            if (item.startsWith('*') && item.endsWith('*')) {
+                                                // Render as a section title
+                                                return (
+                                                    <div key={i} className="text-xl font-bold text-gray-800 -mb-2">
+                                                        {item.replaceAll('*', '')}
+                                                    </div>
+                                                );
+                                            }
+                                        }
 
-                                return (
-                                    <li
-                                        key={i}
-                                        className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300 transform hover:-translate-y-1 border border-gray-100"
-                                    >
-                                        <div className="flex items-start">
-                                            <span className="flex-shrink-0 text-blue-500 mr-4">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M18 14h.01" />
-                                                </svg>
-                                            </span>
-                                            <p className="text-gray-800 font-medium">
-                                                {recommendationText}
-                                                {detailText && <span className="text-gray-500 font-normal"> — {detailText}</span>}
-                                            </p>
-                                        </div>
-                                    </li>
-                                );
-                            })}
-                        </ul>
+                                        // Render as a recommendation card
+                                        return (
+                                            <li
+                                                key={i}
+                                                className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300 transform hover:-translate-y-1 border border-gray-100"
+                                            >
+                                                <div className="flex items-start">
+                                                    <span className="flex-shrink-0 text-blue-500 mr-4 mt-1">
+                                                        {/* Using a different, simpler icon */}
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </span>
+                                                    <p className="text-gray-800 font-medium">
+                                                        {item}
+                                                    </p>
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
                     ) : (
                         <p className="py-4 text-center text-gray-500">No recommendations available</p>
                     )}
