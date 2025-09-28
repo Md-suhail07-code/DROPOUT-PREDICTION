@@ -45,7 +45,7 @@ const SummaryCards = ({ total = 0, high = 0, medium = 0, low = 0, setRiskFilter 
         // Used amber/yellow colors
         bg="bg-amber-50"
         accent="text-amber-600"
-        borderClass="border-l-4 border-amber-700" // Amber accent border
+        borderClass="border-l-4 border-amber-500" // Amber accent border
         onClick={() => setRiskFilter('Medium')}
       />
       <Card
