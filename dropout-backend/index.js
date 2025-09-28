@@ -444,7 +444,10 @@ app.put("/admin/toggle-data-added", authenticateToken, authorizeRoles("Admin"), 
 
 // Mentor: own students
 app.get("/mentor/students", authenticateToken, authorizeRoles("Mentor"), (req, res) => {
-  db.get(`SELECT id, email FROM mentors WHERE email = ?`, [req.email], (err, mentor) => {
+  // Look up mentor by linked user_id when available, or fallback to the authenticated email
+  const userId = req.user && req.user.id;
+  const userEmail = req.user && req.user.email;
+  db.get(`SELECT id, email FROM mentors WHERE user_id = ? OR email = ? LIMIT 1`, [userId || null, userEmail || null], (err, mentor) => {
     if (err) {
       return res.status(500).json({ success: false, message: "DB error", error: err.message });
     }
@@ -453,7 +456,7 @@ app.get("/mentor/students", authenticateToken, authorizeRoles("Mentor"), (req, r
     }
 
     // ✅ Use mentor.email, not just id
-    db.all(`SELECT * FROM students WHERE mentor_email = ? ORDER BY name ASC`, [mentor.email], (e2, rows) => {
+    db.all(`SELECT * FROM students WHERE mentor_id = ? ORDER BY name ASC`, [mentor.id], (e2, rows) => {
       if (e2) {
         return res.status(500).json({ success: false, message: "Failed to fetch", error: e2.message });
       }
