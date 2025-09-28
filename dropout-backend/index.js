@@ -215,6 +215,19 @@ function generateFallbackRecommendations(studentData) {
 
     // Situation Analysis
     let analysis = `**Situation Analysis:** This student is currently facing a ${risk_level} risk.`;
+
+    if (risk_level === 'Low') {
+        analysis += ` The student is performing exceptionally well with strong attendance and no academic backlogs. They are on track for academic success.`;
+        recommendations.push(analysis);
+        recommendations.push("✅ Status: Low Risk - No Immediate Action Required");
+        recommendations.push("This student is excelling and no intervention is needed. Continue to monitor their progress periodically to ensure they remain on track.");
+        recommendations.push("✨ Recommendations for Continued Excellence:");
+        recommendations.push("Encourage the student to take on advanced academic challenges or participate in student-led projects to further their growth.");
+        recommendations.push("Recognize and reward the student's excellent performance to reinforce their positive behavior and serve as an example to their peers.");
+        recommendations.push("Provide opportunities for them to mentor other students, which can improve their leadership skills and strengthen their own knowledge.");
+        return recommendations;
+    }
+
     if (attendance < 75) {
         analysis += ` This is primarily due to low attendance (${attendance}%) which appears to be directly contributing to academic difficulties, evidenced by ${backlogs} subject backlogs.`;
     }
@@ -228,7 +241,7 @@ function generateFallbackRecommendations(studentData) {
     recommendations.push(analysis);
 
     // Immediate Actions
-    recommendations.push("### ⚡ Immediate Actions:");
+    recommendations.push("⚡ Immediate Actions:");
     if (attendance < 75) {
         recommendations.push(`Reach out to the student within 48 hours for a quick check-in to empathetically understand the reasons behind their ${attendance}% attendance.`);
     }
@@ -237,7 +250,7 @@ function generateFallbackRecommendations(studentData) {
     }
 
     // Academic Support
-    recommendations.push("### 📚 Academic Support:");
+    recommendations.push("📚 Academic Support:");
     if (attendance < 75) {
         recommendations.push("Collaborate with the student to create a realistic attendance improvement plan, emphasizing how consistent presence directly impacts understanding and reduces the risk of future backlogs.");
     }
@@ -247,7 +260,7 @@ function generateFallbackRecommendations(studentData) {
     
     // Financial/Mental Health Support (if applicable)
     if (fee_status === 'Overdue' || fee_status === 'Pending' || fee_status === 'Partial') {
-      recommendations.push("### 💰 Financial & Well-being Support:");
+      recommendations.push("💰 Financial & Well-being Support:");
       if (fee_status === 'Overdue' || fee_status === 'Partial') {
         recommendations.push("Connect them with the financial aid office to confidentially discuss an installment plan or potential scholarship opportunities to resolve the fee issue.");
       }
