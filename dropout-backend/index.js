@@ -214,7 +214,7 @@ function generateFallbackRecommendations(studentData) {
     }
 
     // Situation Analysis
-    let analysis = `**Situation Analysis:** This student is currently facing a ${risk_level} risk.`;
+    let analysis = `Situation Analysis: This student is currently facing a ${risk_level} risk.`;
 
     if (risk_level === 'Low') {
         analysis += ` The student is performing exceptionally well with strong attendance and no academic backlogs. They are on track for academic success.`;
