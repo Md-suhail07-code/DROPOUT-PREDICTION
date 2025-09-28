@@ -380,7 +380,7 @@ const StudentDetail = () => {
                     ) : recommendations && recommendations.length > 0 ? (
                         <ul className="grid gap-4 mt-6">
                           {recommendations.map((item, i) => (
-                            item.length < 10 ? (
+                            item.length < 60 ? (
                               <h3 key={i} className="text-gray-800 font-medium">
                                 {item.replaceAll('*', '').replaceAll('### ', '')}
                               </h3>
