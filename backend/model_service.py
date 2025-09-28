@@ -86,13 +86,16 @@ def llm_recommendations(student, risk_label):
     try:
         model = genai.GenerativeModel("models/gemini-2.5-flash") 
         prompt = f"""
-        You are an educational counselor. Student details:
-        Attendance: {student.get('attendance')}
-        Backlogs: {student.get('backlogs')}
-        Fee status: {student.get('fee_status')}
-        Predicted risk: {risk_label}
+        You are an experienced educational counselor. Analyze the following student details and provide 4 highly personalized recommendations. 
+        Each recommendation should be concise (1 sentence), practical, and directly address the student’s unique situation. 
+        Make sure to reference their attendance, backlog subjects, fee status, and predicted dropout risk level when giving advice. 
+        Write in an empathetic, motivating tone that encourages improvement.
 
-        Give 4 concise personalized recommendations, each 1 sentence long, to reduce dropout risk.
+        Student details:
+        - Attendance: {student.get('attendance')}
+        - Backlogs: {student.get('backlogs')}
+        - Fee status: {student.get('fee_status')}
+        - Predicted risk: {risk_label}
         """
         response = model.generate_content(prompt)
         txt = response.text.strip()

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const CircularProgress = ({ value = 0, color, size = 96, stroke = 10 }) => {
+const CircularProgress = ({ value = 0, color, size = 80, stroke = 10 }) => {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.max(0, Math.min(100, value));

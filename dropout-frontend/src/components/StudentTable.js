@@ -99,6 +99,39 @@ const StudentTable = ({ refreshTrigger, onRefresh }) => {
     }
   };
 
+  // Compute numeric risk score using same heuristics as backend/index.js
+  const computeRiskScore = (attendance = 0, score = 0, feeStatus = '') => {
+    let riskScore = 0;
+    // Attendance scoring (0-40)
+    if (attendance < 60) riskScore += 40;
+    else if (attendance < 70) riskScore += 30;
+    else if (attendance < 80) riskScore += 20;
+    else if (attendance < 90) riskScore += 10;
+
+    // Academic performance scoring (0-30)
+    const perf = Number.isFinite(Number(score)) ? Number(score) : 0;
+    if (perf < 40) riskScore += 30;
+    else if (perf < 50) riskScore += 25;
+    else if (perf < 60) riskScore += 20;
+    else if (perf < 70) riskScore += 15;
+    else if (perf < 80) riskScore += 10;
+    else if (perf < 90) riskScore += 5;
+
+    // Fee status scoring (0-30)
+    if ((feeStatus || '').toLowerCase() === 'overdue') riskScore += 30;
+    else if ((feeStatus || '').toLowerCase() === 'pending') riskScore += 15;
+    else if ((feeStatus || '').toLowerCase() === 'partial') riskScore += 10;
+
+    // Cap to 100
+    return Math.min(100, Math.max(0, Math.round(riskScore)));
+  };
+
+  const riskColorForScore = (score) => {
+    if (score >= 70) return 'bg-red-500';
+    if (score >= 40) return 'bg-amber-400';
+    return 'bg-green-500';
+  };
+
   const getFeeStatusBadge = (feeStatus) => {
     const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium";
     
@@ -278,9 +311,28 @@ const StudentTable = ({ refreshTrigger, onRefresh }) => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={getRiskLevelBadge(student.risk_level)}>
-                      {student.risk_level}
-                    </span>
+                    { (student.risk_score !== undefined && student.risk_score !== null) || student.risk_level ? (
+                      (() => {
+                        const score = (student.risk_score !== undefined && student.risk_score !== null) ? Number(student.risk_score) : computeRiskScore(student.attendance, student.score, student.fee_status);
+                        const displayScore = Number.isFinite(score) ? Math.round(score) : null;
+                        if (displayScore !== null) {
+                          return (
+                            <div className="flex items-center gap-3">
+                              <div className="w-28 bg-gray-200 rounded-full h-2 overflow-hidden">
+                                <div className={`${riskColorForScore(displayScore)} h-2`} style={{ width: `${displayScore}%` }} />
+                              </div>
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${displayScore >= 70 ? 'bg-red-600 text-white' : displayScore >=40 ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>
+                                {displayScore}%
+                              </span>
+                            </div>
+                          );
+                        }
+                        // fallback to text badge
+                        return <span className={getRiskLevelBadge(student.risk_level)}>{student.risk_level || 'N/A'}</span>;
+                      })()
+                    ) : (
+                      <span className={getRiskLevelBadge(student.risk_level)}>{student.risk_level || 'N/A'}</span>
+                    )}
                   </td>
                 </tr>
               ))
