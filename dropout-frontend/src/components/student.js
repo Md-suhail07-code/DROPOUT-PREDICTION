@@ -159,6 +159,7 @@ const StudentDetail = () => {
         return { prediction: null, recommendations: [] };
     };
 
+
     const fetchRecommendations = async () => {
         if (!student) return;
         setRecError(null);
@@ -279,9 +280,34 @@ const StudentDetail = () => {
                         </div>
 
                         {/* Performance */}
+                        {/* Performance */}
                         <div className="mt-4">
                             <h3 className="text-lg font-semibold text-gray-900">Performance</h3>
-                            <p className="mt-1 text-gray-600">{student.performance ?? student.score ?? 'N/A'}</p>
+                            {(() => {
+                                const backlogs = Number(student.backlogs || 0);
+                                const getPerformanceLabelFromBacklogs = (b) => {
+                                    if (b <= 0) return 'Excellent';
+                                    if (b === 1) return 'Good';
+                                    if (b === 2) return 'Average';
+                                    return 'Poor';
+                                };
+
+                                const label = getPerformanceLabelFromBacklogs(backlogs);
+
+                                // Dynamic Tailwind CSS classes based on performance label
+                                let badgeColor = 'bg-green-100 text-green-800';
+                                if (label === 'Good') badgeColor = 'bg-green-100 text-green-800';
+                                if (label === 'Average') badgeColor = 'bg-yellow-100 text-yellow-800';
+                                if (label === 'Poor') badgeColor = 'bg-red-100 text-red-800';
+
+                                return (
+                                    <div className="flex items-center space-x-2 mt-2">
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-md font-medium ${badgeColor}`}>
+                                            {label}
+                                        </span>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
 
