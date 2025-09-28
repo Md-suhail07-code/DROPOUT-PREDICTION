@@ -21,7 +21,7 @@ label_map = model_bundle.get('label_map', None)
 
 # --- GEMINI API CONFIGURATION START ---
 # Get the Gemini API key from environment variables
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or "AIzaSyBApxp5VRAjGU53vRvlMxLmHHXaJZxMcPU"
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 # --- GEMINI API CONFIGURATION END ---
