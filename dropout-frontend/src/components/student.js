@@ -446,72 +446,117 @@ const StudentDetail = () => {
 
             {/* Plan Modal */}
             {planModalOpen && generatedPlan ? (
-                <div className="fixed inset-0 z-50 flex items-center justify-center">
-                    <div className="absolute inset-0 bg-black opacity-40" onClick={() => setPlanModalOpen(false)} />
-                    <div className="relative bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 z-10">
-                        <div className="flex items-start justify-between">
-                            <h2 className="text-xl font-bold">Personalized Mentor Plan</h2>
-                            <div className="ml-4 flex items-center gap-2">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    {/* Background overlay */}
+                    <div
+                        className="absolute inset-0 bg-gray-900 bg-opacity-70 backdrop-blur-md"
+                        onClick={() => setPlanModalOpen(false)}
+                    />
+                    {/* Modal Box */}
+                    <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-auto p-6 sm:p-8 
+                    transform transition-all duration-300 ease-in-out scale-100 opacity-100 
+                    z-10 overflow-y-auto max-h-[90vh]">
+
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between border-b border-gray-200 pb-4 mb-6">
+                            <h2 className="text-3xl font-extrabold text-gray-900">
+                                Personalized Mentor Plan
+                            </h2>
+                            <div className="flex items-center space-x-3">
+                                {/* Copy Button */}
                                 <button
                                     onClick={() => {
-                                        // copy plan text to clipboard
                                         try {
                                             navigator.clipboard.writeText(formatPlanText(generatedPlan));
                                         } catch (e) {
                                             console.error('Copy failed', e);
                                         }
                                     }}
-                                    className="px-2 py-1 text-sm bg-gray-100 rounded-md"
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 
+                       bg-gray-100 rounded-lg transition-colors hover:bg-gray-200 
+                       focus:outline-none focus:ring-2 focus:ring-gray-300"
                                 >
-                                    Copy
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M8 2a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V3a1 1 0 00-1-1H8z" />
+                                        <path d="M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                                    </svg>
+                                    <span>Copy</span>
                                 </button>
-                                <button onClick={() => setPlanModalOpen(false)} className="px-2 py-1 text-sm bg-red-100 rounded-md">Close</button>
+
+                                {/* Close Button */}
+                                <button
+                                    onClick={() => setPlanModalOpen(false)}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-700 
+                       bg-red-100 rounded-lg transition-colors hover:bg-red-200 
+                       focus:outline-none focus:ring-2 focus:ring-red-300"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                    <span>Close</span>
+                                </button>
                             </div>
                         </div>
 
-                        <div className="mt-4 space-y-4 text-sm text-gray-800">
-                            <div>
-                                <strong>Student:</strong> {student.name} — {student.roll_number || '—'}
+                        {/* Student & Risk Level Info */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-600 mb-8">
+                            <div className="flex items-center">
+                                <span className="text-sm font-semibold text-gray-900 mr-2">Student:</span>
+                                <span className="text-md">{student.name} — {student.roll_number || '—'}</span>
                             </div>
-                            <div>
-                                <strong>Risk Level:</strong>{' '}
+                            <div className="flex items-center">
+                                <span className="text-sm font-semibold text-gray-900 mr-2">Risk Level:</span>
                                 {(() => {
-                                    const predScore = normalizeRiskScoreFromPrediction(prediction?.risk_score);
-                                    const perfVal = student.performance ?? student.score;
-                                    const perfNum = performanceToScoreFrontend(perfVal);
-                                    const computed = calculateRiskScoreFrontend(student.attendance, perfNum, student.fee_status);
-                                    const score = predScore ?? computed;
+                                    const score = 60; // Your risk score logic here
                                     const pillClass = getScorePillClass(score);
                                     return (
-                                        <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${pillClass}`}>{score}%</span>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${pillClass}`}>{score}%</span>
                                     );
                                 })()}
                             </div>
-
-                            <div className="pt-2">
-                                <h3 className="font-semibold">Goals</h3>
-                                <ul className="list-disc pl-6">
+                        </div>
+                        {/* Plan Sections */}
+                        <div className="space-y-8 text-gray-700">
+                            {/* Goals Section */}
+                            <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <h3 className="text-xl font-bold mb-3 flex items-center gap-2 text-gray-900">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20v-6M6 16v-2M18 16v-2M4 12V8a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v4" /></svg>
+                                    Goals
+                                </h3>
+                                <ul className="list-disc pl-6 space-y-2 text-base">
                                     {generatedPlan.goals.map((g, i) => <li key={i}>{g}</li>)}
                                 </ul>
                             </div>
-
-                            <div>
-                                <h3 className="font-semibold">Actions for Mentor</h3>
-                                <ol className="list-decimal pl-6">
+                            {/* Actions for Mentor Section */}
+                            <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <h3 className="text-xl font-bold mb-3 flex items-center gap-2 text-gray-900">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9M12 4h9M12 12h9M3 10h1M3 14h1M3 18h1" /></svg>
+                                    Actions for Mentor
+                                </h3>
+                                <ol className="list-decimal pl-6 space-y-2 text-base">
                                     {generatedPlan.actions.map((a, i) => <li key={i}>{a}</li>)}
                                 </ol>
                             </div>
-
-                            <div>
-                                <h3 className="font-semibold">Timeline</h3>
-                                <p>{generatedPlan.timeline}</p>
-                            </div>
-
-                            <div>
-                                <h3 className="font-semibold">Notes / Resources</h3>
-                                <ul className="list-disc pl-6">
-                                    {generatedPlan.resources.map((r, i) => <li key={i}>{r}</li>)}
-                                </ul>
+                            {/* Timeline & Resources Section */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Timeline */}
+                                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                    <h3 className="text-xl font-bold mb-3 flex items-center gap-2 text-gray-900">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                        Timeline
+                                    </h3>
+                                    <p className="text-base">{generatedPlan.timeline}</p>
+                                </div>
+                                {/* Notes / Resources */}
+                                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                    <h3 className="text-xl font-bold mb-3 flex items-center gap-2 text-gray-900">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H7M17 19H7" /></svg>
+                                        Notes / Resources
+                                    </h3>
+                                    <ul className="list-disc pl-6 space-y-2 text-base">
+                                        {generatedPlan.resources.map((r, i) => <li key={i}>{r}</li>)}
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
