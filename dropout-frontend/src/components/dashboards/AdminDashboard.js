@@ -1,17 +1,136 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Link } from 'react-router-dom'; // Commented out to resolve compilation error
-import { AuthContext } from '../../App'; // Commented out to resolve compilation error
-import { studentAPI, mentorAPI, adminAPI } from '../../services/api'; // Commented out to resolve compilation error
-import TopNav from '../common/TopNav'; // Commented out to resolve compilation error
-import SummaryCards from '../common/SummaryCards'; // Commented out to resolve compilation error
-import CircularProgress from '../common/CircularProgress'; // Commented out to resolve compilation error
-import './index.css' // Commented out to resolve compilation error
+import { Link } from 'react-router-dom';
+import { AuthContext } from '../../App';
+import { studentAPI, mentorAPI, adminAPI } from '../../services/api';
+import TopNav from '../common/TopNav';
+import SummaryCards from '../common/SummaryCards';
+import CircularProgress from '../common/CircularProgress';
 
-// ====================================================================
-// TEMPORARY LOCAL DEFINITIONS FOR COMPILATION ONLY
-// These are necessary because the actual imported files are not available here.
-// ====================================================================
-// ====================================================================
+// ... (Rest of your component's code)
+const Heatmap = ({ students }) => {
+  const attendanceLabels = ["0-60%", "60-70%", "70-80%", "80-90%", "90-100%"];
+  const performanceLabels = ["0-40", "40-60", "60-80", "80-100"];
+
+  const prepareHeatmapData = () => {
+    const attendanceRanges = [
+      { min: 0, max: 60 },
+      { min: 60, max: 70 },
+      { min: 70, max: 80 },
+      { min: 80, max: 90 },
+      { min: 90, max: 101 },
+    ];
+    const performanceRanges = [
+      { min: 0, max: 40 },
+      { min: 40, max: 60 },
+      { min: 60, max: 80 },
+      { min: 80, max: 101 },
+    ];
+    const heatmap = Array(attendanceRanges.length)
+      .fill(null)
+      .map(() => Array(performanceRanges.length).fill(0));
+    students.forEach((student) => {
+      const att = student.attendance || 0;
+      const perf = student.performance || student.score || 0;
+      const ai = attendanceRanges.findIndex((r) => att >= r.min && att < r.max);
+      const pi = performanceRanges.findIndex((r) => perf >= r.min && perf < r.max);
+      if (ai !== -1 && pi !== -1) heatmap[ai][pi]++;
+    });
+    return heatmap;
+  };
+
+  const heatmapData = prepareHeatmapData();
+
+  const getColor = (count) => {
+    if (count >= 15) return "bg-red-600";
+    if (count >= 10) return "bg-red-500";
+    if (count >= 5) return "bg-red-400";
+    if (count > 0) return "bg-red-300";
+    return "bg-gray-100";
+  };
+
+  return (
+    <div className="h-[400px] w-full p-6 bg-white rounded-xl shadow-lg border border-gray-100 flex flex-col items-center">
+      <h3 className="text-lg font-bold text-gray-800 mb-4 self-start">Attendance vs Performance Heatmap</h3>
+      <div className="flex-grow w-full grid grid-cols-[60px_repeat(4,_minmax(0,_1fr))] text-center gap-1 items-center">
+        <div></div>
+        {performanceLabels.map((label) => (
+          <div
+            key={label}
+            className="text-xs font-semibold text-gray-500 py-1 w-[50px]"
+          >
+            {label}
+          </div>
+        ))}
+        {attendanceLabels.map((attLabel, i) => (
+          <React.Fragment key={attLabel}>
+            <div className="text-sm font-semibold text-gray-500 text-left pr-2 py-2 w-full">
+              {attLabel}
+            </div>
+            {heatmapData[i].map((count, j) => (
+              <div
+                key={`${attLabel}-${performanceLabels[j]}`}
+                className={`w-[50px] aspect-square flex items-center justify-center rounded-lg text-sm font-bold text-gray-800 transition-colors shadow-sm ${getColor(
+                  count
+                )}`}
+              >
+                {count > 0 ? count : ""}
+              </div>
+            ))}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const RiskDistribution = ({ students }) => {
+  const prepareRiskDistribution = () => {
+    const high = students.filter((s) => s.risk_level === "High").length;
+    const medium = students.filter((s) => s.risk_level === "Medium").length;
+    const low = students.filter((s) => s.risk_level === "Low").length;
+    return { high, medium, low };
+  };
+
+  const data = prepareRiskDistribution();
+  const total = data.high + data.medium + data.low;
+  const getPercentage = (count) => (total > 0 ? (count / total) * 100 : 0);
+
+  return (
+    <div className="h-[400px] w-full p-6 bg-white rounded-xl shadow-lg border border-gray-100 flex flex-col items-center">
+      <h3 className="text-lg font-bold text-gray-800 mb-4 self-start">Risk Distribution</h3>
+      <div className="flex-grow w-full space-y-6 flex flex-col justify-center">
+        {["High", "Medium", "Low"].map((risk) => {
+          const count = data[risk.toLowerCase()];
+          const color =
+            risk === "High"
+              ? "bg-red-500"
+              : risk === "Medium"
+                ? "bg-amber-500"
+                : "bg-green-500";
+          const width = getPercentage(count);
+          return (
+            <div key={risk} className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-medium text-gray-600">
+                  {risk} Risk
+                </span>
+                <span className="text-sm font-semibold text-gray-800">
+                  {count}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className={`${color} rounded-full h-full transition-all duration-500`}
+                  style={{ width: `${width}%` }}
+                ></div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -25,33 +144,27 @@ const AdminDashboard = () => {
   const [sortBy, setSortBy] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
   const [page, setPage] = useState(1);
-  // `null` = loading, `false` = not added, `true` = added
   const [loading, setLoading] = useState(true);
   const [dataadded, setDataadded] = useState(null);
   const [riskFilter, setRiskFilter] = useState('All');
   const pageSize = 10;
 
-  // Replaced alert() with console log for better UX in modern apps
   const showNotification = (message, isError = false) => {
-    // This function replaces the original alert() calls
     console.log(isError ? `[ERROR] ${message}` : `[INFO] ${message}`);
   };
 
   const load = async () => {
-    // Original logic remains
     try {
-        const res = await studentAPI.getAdminStudents();
-        setStudents(res.data);
-    } catch(e) {
-        console.error("Error loading students:", e);
-        // Using empty array as fallback if API call fails
-        setStudents([]); 
+      const res = await studentAPI.getAdminStudents();
+      setStudents(res.data);
+    } catch (e) {
+      console.error("Error loading students:", e);
+      setStudents([]);
     }
   };
 
   useEffect(() => { load(); }, [refresh]);
 
-  // Load whether data has been added from backend
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -65,7 +178,7 @@ const AdminDashboard = () => {
         }
       } catch (err) {
         console.error('Failed to fetch dataadded status. Using default fallback.', err);
-        if (mounted) setDataadded(false); // safe fallback: allow import UI
+        if (mounted) setDataadded(false);
       } finally {
         setLoading(false);
       }
@@ -75,8 +188,23 @@ const AdminDashboard = () => {
     };
   }, []);
 
+  const handleReset = async () => {
+    if (window.confirm("Are you sure you want to reset and clear all data? This cannot be undone.")) {
+      try {
+        // Here you would call an API to clear the data on the backend
+        // For now, we'll just simulate the change
+        // await adminAPI.resetData();
+        await adminAPI.setDataAddedStatus(false);
+        setDataadded(false);
+        setStudents([]); // Clear local state
+        showNotification("Data has been reset.");
+      } catch (err) {
+        console.error('Failed to reset data', err);
+        showNotification('Failed to reset data.', true);
+      }
+    }
+  };
 
-  // Filtering + sorting
   const filtered = students.filter(s => {
     const matchSearch = `${s.name} ${s.roll_number || ''} ${s.email || ''}`
       .toLowerCase()
@@ -94,7 +222,7 @@ const AdminDashboard = () => {
         bv = b.attendance || 0;
         break;
       case 'performance':
-      case 'backlogs': 
+      case 'backlogs':
         av = a.backlogs ?? a.score ?? a.performance ?? 0;
         bv = b.backlogs ?? b.score ?? b.performance ?? 0;
         break;
@@ -119,7 +247,6 @@ const AdminDashboard = () => {
   useEffect(() => { if (page > totalPages) setPage(1); }, [totalPages]);
   const current = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  // File export
   const handleExport = async () => {
     try {
       const res = await studentAPI.exportExcel();
@@ -156,7 +283,6 @@ const AdminDashboard = () => {
 
   const mentors = Array.from(new Set(students.map(s => s.mentor_name || 'Unassigned')));
 
-  // File import
   const handleImportstudent = async (e) => {
     e.preventDefault();
     if (!file) {
@@ -174,9 +300,7 @@ const AdminDashboard = () => {
       setFile(null);
       e.target.reset();
       setRefresh(v => v + 1);
-      // Optimistically update UI immediately so dashboard tab appears
       setDataadded(true);
-      // Update server-side flag in background; don't block UI on this
       adminAPI.setDataAddedStatus(true).catch(err => {
         console.error('Failed to update server dataadded flag', err);
       });
@@ -213,7 +337,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Summary totals
   const totals = {
     total: students.length,
     high: students.filter(s => s.risk_level === 'High').length,
@@ -221,11 +344,10 @@ const AdminDashboard = () => {
     low: students.filter(s => s.risk_level === 'Low').length,
   };
 
-  // Helper functions for badge colors
   const getRiskBadgeClasses = (riskLevel) => {
     switch (riskLevel) {
       case 'High':
-        return 'bg-red-500 text-white shadow-md'; // Solid red for high risk
+        return 'bg-red-500 text-white shadow-md';
       case 'Medium':
         return 'bg-amber-100 text-amber-800';
       case 'Low':
@@ -269,7 +391,7 @@ const AdminDashboard = () => {
         return 'bg-green-100 text-green-800';
       case 'Pending':
         return 'bg-amber-100 text-amber-800';
-      default: // Unpaid/Other
+      default:
         return 'bg-red-100 text-red-800';
     }
   };
@@ -281,16 +403,14 @@ const AdminDashboard = () => {
     return ' ';
   };
 
-
   return (
     <>
-      <TopNav title="Admin Dashboard" />
+      <TopNav onReset={handleReset} />
       {loading ? (
         <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
-          {/* Enhanced loading spinner */}
           <svg className="animate-spin h-12 w-12 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
           <h1 className="text-xl font-semibold text-gray-700 mt-4">Loading Dashboard Data...</h1>
         </div>
@@ -304,31 +424,15 @@ const AdminDashboard = () => {
               low={totals.low}
               setRiskFilter={setRiskFilter}
             />
-            
-            {/* Control Panel: Reset and Export (Enhanced styling) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Heatmap students={students} />
+              <RiskDistribution students={students} />
+            </div>
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 space-y-4">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <h3 className="text-xl font-bold text-gray-800">Student Directory</h3>
-                
-                <button
-                  onClick={() => {
-                    (async () => {
-                      try {
-                        await adminAPI.setDataAddedStatus(false);
-                        setDataadded(false);
-                      } catch (err) {
-                        console.error('Failed to clear dataadded flag', err);
-                        setDataadded(false);
-                      }
-                    })();
-                  }}
-                  className="w-full md:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-lg shadow-red-500/30 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Add New Data / Reset
-                </button>
+                <h3 className="text-xl font-bold text-gray-800">Filter students</h3>
               </div>
 
-              {/* Filters and Exports */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-100">
                 <div className="lg:col-span-2">
                   <label htmlFor="search" className="sr-only">Search</label>
@@ -340,7 +444,7 @@ const AdminDashboard = () => {
                     className="w-full border-gray-300 rounded-lg shadow-sm px-4 py-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
                   />
                 </div>
-                
+
                 <select
                   value={mentorFilter}
                   onChange={e => setMentorFilter(e.target.value)}
@@ -355,7 +459,7 @@ const AdminDashboard = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={handleExportCSV}
-                    className="flex-1 px-4 py-2 text-sm font-semibold text-white rounded-lg shadow-md bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                    className="flex-1 px-4 py-2 text-sm font-semibold text-white rounded-lg shadow-md bg-black hover:bg-gray-800 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                   >
                     Export CSV
                   </button>
@@ -369,7 +473,6 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Students Table (Enhanced styling) */}
             <div className="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -387,7 +490,6 @@ const AdminDashboard = () => {
                       ].map(h => (
                         <th
                           key={h.key}
-                          // Apply hover/cursor styles only to sortable columns
                           className={`px-6 py-4 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider ${['risk', 'email', 'fee_status'].includes(h.key) ? '' : 'cursor-pointer hover:bg-indigo-100 transition'}`}
                         >
                           <button
@@ -414,18 +516,17 @@ const AdminDashboard = () => {
                   <tbody className="divide-y divide-gray-100">
                     {current.map((s, index) => (
                       <tr key={s.id} className={index % 2 === 0 ? 'bg-white hover:bg-indigo-50/50 transition-colors' : 'bg-gray-50 hover:bg-indigo-50/50 transition-colors'}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-md font-medium text-gray-900">
                           <Link to={`/admin/students/${s.id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline">
                             {s.name}
                           </Link>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.roll_number || '-'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.email || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{s.roll_number || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{s.email || '-'}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {/* Use original CircularProgress component */}
                           <CircularProgress value={s.attendance || 0} size={48} stroke={5} />
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">{s.backlogs ?? s.score ?? '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-md font-medium text-gray-700">{s.backlogs ?? s.score ?? '-'}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-bold ${getFeeBadgeClasses(s.fee_status)}`}
@@ -433,9 +534,9 @@ const AdminDashboard = () => {
                             {s.fee_status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{s.mentor_name || 'Unassigned'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-md text-gray-600">{s.mentor_name || 'Unassigned'}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          { (s.risk_score !== undefined && s.risk_score !== null) || s.risk_level ? (
+                          {(s.risk_score !== undefined && s.risk_score !== null) || s.risk_level ? (
                             (() => {
                               const score = (s.risk_score !== undefined && s.risk_score !== null) ? Number(s.risk_score) : computeRiskScore(s.attendance, s.score ?? s.performance, s.fee_status);
                               const displayScore = Number.isFinite(score) ? Math.round(score) : null;
@@ -445,7 +546,7 @@ const AdminDashboard = () => {
                                     <div className="w-28 bg-gray-200 rounded-full h-2 overflow-hidden">
                                       <div className={`${riskColorForScore(displayScore)} h-2`} style={{ width: `${displayScore}%` }} />
                                     </div>
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${displayScore >= 70 ? 'bg-red-600 text-white' : displayScore >=40 ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${displayScore >= 70 ? 'bg-red-600 text-white' : displayScore >= 40 ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>
                                       {displayScore}%
                                     </span>
                                   </div>
@@ -464,7 +565,6 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Pagination (Enhanced styling) */}
             <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-lg border border-gray-100">
               <div className="text-sm text-gray-600 font-medium">Page {page} of {totalPages}</div>
               <div className="flex items-center gap-2">
@@ -488,7 +588,6 @@ const AdminDashboard = () => {
           </main>
         </div>
       ) : (
-        // Data Import Screen (Enhanced Card Layout)
         <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 bg-gray-50">
           <div className="w-full max-w-4xl space-y-8">
             <h2 className="text-3xl font-extrabold text-gray-900 text-center">
@@ -499,7 +598,6 @@ const AdminDashboard = () => {
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Mentor Import Card */}
               <div className="bg-white p-8 rounded-xl shadow-2xl border border-indigo-100 space-y-5">
                 <h3 className="text-xl font-bold text-indigo-700">
                   Import Mentor Data
@@ -512,7 +610,6 @@ const AdminDashboard = () => {
                       type="file"
                       accept=".csv"
                       onChange={e => setFile(e.target.files?.[0] || null)}
-                      // Styled file input for better appearance
                       className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                     />
                   </div>
@@ -522,16 +619,15 @@ const AdminDashboard = () => {
                     disabled={importingMentor}
                   >
                     {importingMentor ? (
-                        <>
-                            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            Importing…
-                        </>
+                      <>
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Importing…
+                      </>
                     ) : 'Import Mentors CSV'}
                   </button>
                 </form>
               </div>
 
-              {/* Student Import Card */}
               <div className="bg-white p-8 rounded-xl shadow-2xl border border-indigo-100 space-y-5">
                 <h3 className="text-xl font-bold text-indigo-700">
                   Import Student Data
@@ -553,10 +649,10 @@ const AdminDashboard = () => {
                     disabled={importingStudent}
                   >
                     {importingStudent ? (
-                        <>
-                            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            Importing…
-                        </>
+                      <>
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Importing…
+                      </>
                     ) : 'Import Students CSV'}
                   </button>
                 </form>
