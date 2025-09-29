@@ -1,32 +1,67 @@
 import React from 'react';
-// FIX: The external import is commented out to prevent compilation errors
 import { AuthContext } from '../../App';
+import logo from './logo.png'; // <-- Adjust path as per your project
+import { LogOut, Plus } from 'lucide-react';
 
-// Necessary definition for AuthContext to avoid runtime errors in this isolated file.
-// In your complete application, this will correctly reference '../../App'.
-
-
-const TopNav = ({ title }) => {
+const TopNav = ({ onReset }) => {
   const { user, logout } = React.useContext(AuthContext);
+
   return (
-    // Make the header sticky at the top, increase z-index, and use a slightly darker background for contrast
-    <header className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-        <div>
-          {/* Enhanced font weight and slightly deeper text color */}
-          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">{title}</h1>
-          {/* Role subtitle for context */}
-          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-0.5">Role: <span className="text-indigo-600 font-semibold">{user?.role || 'Guest'}</span></p>
-        </div>
+    <header className="sticky top-0 z-20 bg-black text-white shadow-lg m-2 rounded-xl p-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between">
+        {/* Left Section: Logo + Title */}
         <div className="flex items-center gap-3">
-          {/* User name display with a friendly text color */}
-          <span className="hidden sm:block text-sm font-semibold text-gray-700">{user?.name}</span>
-          <button 
-            onClick={logout} 
-            // Enhanced button styling: added padding, font-weight, smoother border radius, and a deeper red color with a pronounced hover effect
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+          <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
+          <h1 className="text-xl font-extrabold tracking-tight text-white">
+            STEPUP-EWS
+          </h1>
+        </div>
+
+        {/* Right Section: Actions - Hidden on small screens */}
+        <div className="hidden sm:flex items-center gap-4">
+          {/* Reset button */}
+          <button
+            onClick={onReset}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full shadow-md transition-all duration-200 flex items-center gap-1"
           >
+            <Plus size={18} />
+            New Data
+          </button>
+          {/* User info */}
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col text-center">
+              <span className="font-bold text-sm">{user?.name || 'Guest'}</span>
+              <span className="text-xs bg-gray-100 px-2 rounded-full text-black font-bold p-1">{user?.role || 'User'}</span>
+            </div>
+            <div className="h-9 w-9 rounded-full flex items-center justify-center bg-gray-600 text-white font-bold border-2 border-white shadow-sm">
+              {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+            </div>
+          </div>
+          {/* Logout */}
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 p-2 text-gray-400 hover:text-red-500 rounded-md font-bold transition-all border-2 border-gray-400 hover:border-red-500"
+          >
+            <LogOut size={20} />
             Logout
+          </button>
+
+
+        </div>
+
+        {/* Responsive buttons for small screens */}
+        <div className="sm:hidden flex items-center gap-2">
+          <button
+            onClick={onReset}
+            className="p-2 bg-red-600 text-white rounded-full transition-all duration-200"
+          >
+            <Plus size={18} />
+          </button>
+          <button
+            onClick={logout}
+            className="p-2 text-gray-400 hover:text-red-500 rounded-md transition-all"
+          >
+            <LogOut size={20} />
           </button>
         </div>
       </div>
