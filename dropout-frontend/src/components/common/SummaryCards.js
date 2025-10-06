@@ -3,7 +3,7 @@ import React from 'react';
 // Gumroad-inspired Card Component with thin outlines
 const Card = ({ title, value, accent, onClick, bg, borderClass = '', icon, progressColor }) => (
     <div
-        className={`card-hover p-6 cursor-pointer relative overflow-hidden group ${bg} ${borderClass} transition-all duration-300 hover:shadow-3xl hover:scale-120`}
+        className={`card-hover p-6 cursor-pointer relative overflow-hidden group ${bg} ${borderClass} rounded-lg transition-all duration-300 hover:shadow-3xl hover:scale-120`}
         onClick={onClick}
     >
         {/* Content */}
