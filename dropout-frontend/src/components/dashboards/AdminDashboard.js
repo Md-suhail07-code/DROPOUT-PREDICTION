@@ -367,7 +367,7 @@ const AdminDashboard = () => {
                       ].map(h => (
                         <th
                           key={h.key}
-                          className={`px-6 py-4 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider ${['risk', 'email', 'fee_status'].includes(h.key) ? '' : 'cursor-pointer hover:bg-indigo-100 transition'}`}
+                          className={`${h.width} px-4 py-4 ${h.align} text-sm font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition`}
                         >
                           <button
                             type="button"
