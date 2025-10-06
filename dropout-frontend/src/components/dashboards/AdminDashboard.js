@@ -5,132 +5,9 @@ import { studentAPI, mentorAPI, adminAPI } from '../../services/api';
 import TopNav from '../common/TopNav';
 import SummaryCards from '../common/SummaryCards';
 import CircularProgress from '../common/CircularProgress';
+import Heatmap from '../common/Heatmap';
+import RiskFactorsChart from '../common/RiskFactorsChart';
 
-// ... (Rest of your component's code)
-const Heatmap = ({ students }) => {
-  const attendanceLabels = ["0-60%", "60-70%", "70-80%", "80-90%", "90-100%"];
-  const performanceLabels = ["0-40", "40-60", "60-80", "80-100"];
-
-  const prepareHeatmapData = () => {
-    const attendanceRanges = [
-      { min: 0, max: 60 },
-      { min: 60, max: 70 },
-      { min: 70, max: 80 },
-      { min: 80, max: 90 },
-      { min: 90, max: 101 },
-    ];
-    const performanceRanges = [
-      { min: 0, max: 40 },
-      { min: 40, max: 60 },
-      { min: 60, max: 80 },
-      { min: 80, max: 101 },
-    ];
-    const heatmap = Array(attendanceRanges.length)
-      .fill(null)
-      .map(() => Array(performanceRanges.length).fill(0));
-    students.forEach((student) => {
-      const att = student.attendance || 0;
-      const perf = student.performance || student.score || 0;
-      const ai = attendanceRanges.findIndex((r) => att >= r.min && att < r.max);
-      const pi = performanceRanges.findIndex((r) => perf >= r.min && perf < r.max);
-      if (ai !== -1 && pi !== -1) heatmap[ai][pi]++;
-    });
-    return heatmap;
-  };
-
-  const heatmapData = prepareHeatmapData();
-
-  const getColor = (count) => {
-    if (count >= 15) return "bg-red-600";
-    if (count >= 10) return "bg-red-500";
-    if (count >= 5) return "bg-red-400";
-    if (count > 0) return "bg-red-300";
-    return "bg-gray-100";
-  };
-
-  return (
-    <div className="h-[400px] w-full p-6 bg-white rounded-xl shadow-lg border border-gray-100 flex flex-col items-center">
-      <h3 className="text-lg font-bold text-gray-800 mb-4 self-start">Attendance vs Performance Heatmap</h3>
-      <div className="flex-grow w-full grid grid-cols-[60px_repeat(4,_minmax(0,_1fr))] text-center gap-1 items-center">
-        <div></div>
-        {performanceLabels.map((label) => (
-          <div
-            key={label}
-            className="text-xs font-semibold text-gray-500 py-1 w-[50px]"
-          >
-            {label}
-          </div>
-        ))}
-        {attendanceLabels.map((attLabel, i) => (
-          <React.Fragment key={attLabel}>
-            <div className="text-sm font-semibold text-gray-500 text-left pr-2 py-2 w-full">
-              {attLabel}
-            </div>
-            {heatmapData[i].map((count, j) => (
-              <div
-                key={`${attLabel}-${performanceLabels[j]}`}
-                className={`w-[50px] aspect-square flex items-center justify-center rounded-lg text-sm font-bold text-gray-800 transition-colors shadow-sm ${getColor(
-                  count
-                )}`}
-              >
-                {count > 0 ? count : ""}
-              </div>
-            ))}
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const RiskDistribution = ({ students }) => {
-  const prepareRiskDistribution = () => {
-    const high = students.filter((s) => s.risk_level === "High").length;
-    const medium = students.filter((s) => s.risk_level === "Medium").length;
-    const low = students.filter((s) => s.risk_level === "Low").length;
-    return { high, medium, low };
-  };
-
-  const data = prepareRiskDistribution();
-  const total = data.high + data.medium + data.low;
-  const getPercentage = (count) => (total > 0 ? (count / total) * 100 : 0);
-
-  return (
-    <div className="h-[400px] w-full p-6 bg-white rounded-xl shadow-lg border border-gray-100 flex flex-col items-center">
-      <h3 className="text-lg font-bold text-gray-800 mb-4 self-start">Risk Distribution</h3>
-      <div className="flex-grow w-full space-y-6 flex flex-col justify-center">
-        {["High", "Medium", "Low"].map((risk) => {
-          const count = data[risk.toLowerCase()];
-          const color =
-            risk === "High"
-              ? "bg-red-500"
-              : risk === "Medium"
-                ? "bg-amber-500"
-                : "bg-green-500";
-          const width = getPercentage(count);
-          return (
-            <div key={risk} className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-medium text-gray-600">
-                  {risk} Risk
-                </span>
-                <span className="text-sm font-semibold text-gray-800">
-                  {count}
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className={`${color} rounded-full h-full transition-all duration-500`}
-                  style={{ width: `${width}%` }}
-                ></div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
 
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -425,8 +302,8 @@ const AdminDashboard = () => {
               setRiskFilter={setRiskFilter}
             />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <Heatmap students={students} />
-              <RiskDistribution students={students} />
+              <Heatmap data={students} title="Attendance Distribution by Section" />
+              <RiskFactorsChart data={students} title="Primary Risk Factors" />
             </div>
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 space-y-4">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -590,34 +467,36 @@ const AdminDashboard = () => {
       ) : (
         <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 bg-gray-50">
           <div className="w-full max-w-4xl space-y-8">
-            <h2 className="text-3xl font-extrabold text-gray-900 text-center">
-              <span className="text-indigo-600">Setup</span> Required
-            </h2>
-            <p className="text-center text-lg text-gray-600">
-              Please import your student and mentor data to activate the dashboard.
-            </p>
-
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-gray-200">
+                <svg className="w-10 h-10 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
+                <span className="text-gray-600">Setup</span> Required
+              </h2>
+              <p className="text-center text-lg text-gray-600">
+                Please import your student and mentor data to activate the dashboard.
+              </p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white p-8 rounded-xl shadow-2xl border border-indigo-100 space-y-5">
-                <h3 className="text-xl font-bold text-indigo-700">
-                  Import Mentor Data
-                </h3>
+              {/* Mentor Import Card */}
+              <div className="card p-8 space-y-5">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900"> Import Mentor Data </h3>
+                </div>
                 <form onSubmit={handleImportmentor} className="space-y-4">
                   <div className="flex flex-col gap-2">
                     <label htmlFor="mentor-file-input" className="text-sm font-medium text-gray-700">Upload CSV</label>
-                    <input
-                      id="mentor-file-input"
-                      type="file"
-                      accept=".csv"
-                      onChange={e => setFile(e.target.files?.[0] || null)}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                    />
+                    <input id="mentor-file-input" type="file" accept=".csv" onChange={e => setFile(e.target.files?.[0] || null)} className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-900 hover:file:bg-gray-200" />
                   </div>
-                  <button
-                    type="submit"
-                    className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2"
-                    disabled={importingMentor}
-                  >
+                  <button type="submit" className="w-full px-4 py-2 bg-gray-900 hover:bg-black text-white font-semibold rounded-lg transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 border border-gray-900 hover:border-black" disabled={importingMentor} >
                     {importingMentor ? (
                       <>
                         <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -628,26 +507,22 @@ const AdminDashboard = () => {
                 </form>
               </div>
 
-              <div className="bg-white p-8 rounded-xl shadow-2xl border border-indigo-100 space-y-5">
-                <h3 className="text-xl font-bold text-indigo-700">
-                  Import Student Data
-                </h3>
+              {/* Student Import Card */}
+              <div className="card p-8 space-y-5">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900"> Import Student Data </h3>
+                </div>
                 <form onSubmit={handleImportstudent} className="space-y-4">
                   <div className="flex flex-col gap-2">
                     <label htmlFor="student-file-input" className="text-sm font-medium text-gray-700">Upload CSV</label>
-                    <input
-                      id="student-file-input"
-                      type="file"
-                      accept=".csv"
-                      onChange={e => setFile(e.target.files?.[0] || null)}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                    />
+                    <input id="student-file-input" type="file" accept=".csv" onChange={e => setFile(e.target.files?.[0] || null)} className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-900 hover:file:bg-gray-200" />
                   </div>
-                  <button
-                    type="submit"
-                    className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2"
-                    disabled={importingStudent}
-                  >
+                  <button type="submit" className="w-full px-4 py-2 bg-gray-900 hover:bg-black text-white font-semibold rounded-lg transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2 border border-gray-900 hover:border-black" disabled={importingStudent} >
                     {importingStudent ? (
                       <>
                         <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
