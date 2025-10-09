@@ -15,6 +15,7 @@ const TopNav = ({ onReset }) => {
           <h1 className="text-xl font-extrabold tracking-tight text-white">
             STEPUP-EWS
           </h1>
+          <p className='text-s text-gray-400 ml-1'>by team Algophoenix</p>
         </div>
 
         {/* Right Section: Actions - Hidden on small screens */}
