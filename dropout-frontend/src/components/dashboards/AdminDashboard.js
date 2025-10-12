@@ -292,7 +292,7 @@ const AdminDashboard = () => {
           <h1 className="text-xl font-semibold text-gray-700 mt-4">Loading Dashboard Data...</h1>
         </div>
       ) : dataadded ? (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 m-5">
           <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8 space-y-8">
             <SummaryCards
               total={totals.total}
