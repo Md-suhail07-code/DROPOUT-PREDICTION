@@ -246,21 +246,21 @@ const StudentDetail = () => {
                                 })()}
                             </div>
                             <div className="text-sm text-gray-500 mt-2 sm:mt-0">
-                                Roll: <strong className="font-semibold text-gray-800">{student.roll_number || '—'}</strong>
+                                Roll Number : <strong className="font-semibold text-gray-800">{student.roll_number || '—'}</strong>
                                 <span className="mx-2">&middot;</span>
-                                Section: <strong className="font-semibold text-gray-800">{student.section || '—'}</strong>
+                                Section : <strong className="font-semibold text-gray-800">{student.section || '—'}</strong>
                             </div>
                         </div>
 
                         {/* Grid Details */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-sm">
-                            <div><span className="text-gray-500 font-medium">Email:</span> <span className="font-medium text-indigo-600">{student.email || '—'}</span></div>
-                            <div><span className="text-gray-500 font-medium">Fee Status:</span>
+                            <div><span className="text-gray-500 font-medium">Email : </span> <span className="font-medium text-indigo-600">{student.email || '—'}</span></div>
+                            <div><span className="text-gray-500 font-medium">Fee Status : </span>
                                 <Badge color={student.fee_status === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
                                     {student.fee_status || '—'}
                                 </Badge>
                             </div>
-                            <div><span className="text-gray-500 font-medium">Mentor:</span> <span className="font-medium text-gray-900">{student.mentor_name || '—'}</span></div>
+                            <div><span className="text-gray-500 font-medium">Mentor : </span> <span className="font-medium text-gray-900">{student.mentor_name || '—'}</span></div>
                         </div>
 
                         {/* Metrics Grid */}
@@ -312,31 +312,13 @@ const StudentDetail = () => {
                     </div>
 
                     {/* Right: Mentor Panel */}
-                    <div className="w-full lg:w-80 bg-indigo-50 rounded-xl p-6 mt-6 lg:mt-0 shadow-inner space-y-4 border border-indigo-200">
-                        <h3 className="text-lg font-bold text-indigo-800">Assigned Mentor</h3>
+                    <div className="w-full lg:w-80 bg-gray-50 rounded-xl p-6 mt-6 lg:mt-0 shadow-inner space-y-4 border border-gray-200">
+                        <h3 className="text-lg font-bold text-gray-800">Assigned Mentor</h3>
                         <div className="font-semibold text-gray-900">{student.mentor_name || 'Unassigned'}</div>
                         <div className="text-sm text-gray-600 truncate">{student.mentor_email || 'No email provided'}</div>
-                        <div className="mt-4 text-sm text-gray-500">
-                            <strong>Risk Flag:</strong>{' '}
-                            <Badge color={student.risk_flag ? 'bg-red-600 text-white' : 'bg-green-100 text-green-800'}>
-                                {student.risk_flag ? 'At risk' : 'OK'}
-                            </Badge>
-                        </div>
 
                         {/* Actions: Notify Mentor + Generate Plan */}
                         <div className="mt-6 space-y-3">
-                            <button
-                                onClick={async () => {
-                                    // Simulate notify action (could be wired to an API)
-                                    setNotifyMessage('Mentor Notified');
-                                    // auto-hide after 3s
-                                    setTimeout(() => setNotifyMessage(null), 3000);
-                                }}
-                                className="w-full inline-flex justify-center items-center px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none"
-                            >
-                                Notify Mentor
-                            </button>
-
                             <button
                                 onClick={async () => {
                                     // Build a personalized plan based on available data
@@ -351,59 +333,208 @@ const StudentDetail = () => {
                                         setPlanGenerating(false);
                                     }
                                 }}
-                                className="w-full inline-flex justify-center items-center px-3 py-2 border border-indigo-600 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-50 focus:outline-none"
+                                className="w-full inline-flex justify-center items-center gap-2 px-4 py-3 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-black focus:outline-none disabled:opacity-50 transition-colors duration-200"
+
                                 disabled={planGenerating}
                             >
-                                {planGenerating ? 'Generating…' : 'Generate Plan'}
+                                {planGenerating ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Generating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                        </svg>
+                                        Generate Action Plan
+                                    </>
+                                )}
                             </button>
+                            <button
+                                onClick={async () => {
+                                    // Simulate notify action (could be wired to an API)
+                                    setNotifyMessage('Mentor Notified');
+                                    // auto-hide after 3s
+                                    setTimeout(() => setNotifyMessage(null), 3000);
+                                }}
+                                className="w-full inline-flex justify-center items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 focus:outline-none transition-colors duration-200"
+                            >
+                                Notify Mentor
+                            </button>
+
+
                         </div>
                     </div>
                 </div>
 
                 {/* Recommendations */}
-                <div className="bg-white rounded-xl shadow-xl p-6 border border-gray-200">
-                    <div className="flex items-center justify-between border-b pb-3">
-                        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">AI Recommendations 🧠</h3>
-                        <button
-                            onClick={fetchRecommendations}
-                            className="px-3 py-1 text-xs border border-transparent font-medium rounded-md shadow-sm text-white bg-indigo-500 hover:bg-indigo-600 focus:outline-none disabled:opacity-50 transition"
-                            disabled={loadingRec}
-                        >
-                            {loadingRec ? 'Refreshing…' : 'Refresh'}
-                        </button>
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                    {/* Header - Black Bar */}
+                    <div className="bg-black px-6 py-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-white">AI Recommendations</h3>
+                                    <p className="text-sm text-gray-300">Personalized insights and actions</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={fetchRecommendations}
+                                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-black bg-white hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={loadingRec}
+                            >
+                                {loadingRec ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                                        Refreshing
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Refresh
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
 
-                    {loadingRec ? (
-                        <p className="py-4 text-center text-gray-500">Loading recommendations…</p>
-                    ) : recError ? (
-                        <p className="py-4 text-center text-red-500 font-medium">{recError}</p>
-                    ) : recommendations && recommendations.length > 0 ? (
-                        <ul className="grid gap-4 mt-6">
-                          {recommendations.map((item, i) => (
-                            item.length < 60 ? (
-                              <h3 key={i} className="text-gray-800 font-medium">
-                                {item.replaceAll('*', '').replaceAll('### ', '')}
-                              </h3>
-                            ) : (
-                              <li key={i} className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300 transform hover:-translate-y-1 border border-gray-100">
-                                <div className="flex items-start">
-                                  <span className="flex-shrink-0 text-blue-500 mr-4 mt-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                  </span>
-                                  <p className="text-gray-800 font-medium">
-                                    {item.replaceAll('*', '').replaceAll('### ', '')}
-                                  </p>
+                    {/* Content */}
+                    <div className="p-6">
+                        {loadingRec ? (
+                            <div className="flex items-center justify-center py-8">
+                                <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin"></div>
+                            </div>
+                        ) : recError ? (
+                            <div className="flex items-center justify-center py-8">
+                                <div className="text-center">
+                                    <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-sm font-medium text-red-600 mb-1">Failed to load recommendations</p>
+                                    <p className="text-xs text-gray-500">{recError}</p>
                                 </div>
-                              </li>
-                            )
-                          ))}
-                        </ul>
+                            </div>
+                        ) : recommendations && recommendations.length > 0 ? (
+                            <div className="space-y-4">
+                                {(() => {
+                                    const sections = [];
+                                    let currentSection = null;
 
-                    ) : (
-                        <p className="py-4 text-center text-gray-500">No recommendations available</p>
-                    )}
+                                    recommendations.forEach((item, i) => {
+                                        // Clean text: remove markdown, emojis, and extra whitespace
+                                        const cleanText = item
+                                            .replaceAll('*', '')
+                                            .replaceAll('### ', '')
+                                            .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+                                            .replace(/\s+/g, ' ')
+                                            .trim();
+                                        const isHeader = cleanText.length < 60;
+
+                                        if (isHeader) {
+                                            // Save previous section if it exists
+                                            if (currentSection) {
+                                                sections.push(currentSection);
+                                            }
+                                            // Start new section
+                                            currentSection = {
+                                                title: cleanText,
+                                                items: []
+                                            };
+                                        } else if (currentSection) {
+                                            // Add item to current section
+                                            currentSection.items.push(cleanText);
+                                        } else {
+                                            // Handle case where first item is not a header
+                                            currentSection = {
+                                                title: 'General Recommendations',
+                                                items: [cleanText]
+                                            };
+                                        }
+                                    });
+
+                                    // Add the last section
+                                    if (currentSection) {
+                                        sections.push(currentSection);
+                                    }
+
+                                    // Define icons for different section types
+                                    const getSectionIcon = (title) => {
+                                        const lowerTitle = title.toLowerCase();
+                                        if (lowerTitle.includes('status') || lowerTitle.includes('risk')) {
+                                            return (
+                                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            );
+                                        } else if (lowerTitle.includes('recommendation') || lowerTitle.includes('action')) {
+                                            return (
+                                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                </svg>
+                                            );
+                                        } else if (lowerTitle.includes('excellence') || lowerTitle.includes('improve')) {
+                                            return (
+                                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                                </svg>
+                                            );
+                                        } else {
+                                            return (
+                                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                                </svg>
+                                            );
+                                        }
+                                    };
+
+                                    return sections.map((section, sectionIndex) => (
+                                        <div key={sectionIndex} className="space-y-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 h-6 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
+                                                    {getSectionIcon(section.title)}
+                                                </div>
+                                                <h4 className="text-base font-semibold text-gray-900">{section.title}</h4>
+                                            </div>
+                                            <div className="ml-9 space-y-2">
+                                                {section.items.map((item, itemIndex) => (
+                                                    <div key={itemIndex} className="flex items-start gap-2">
+                                                        <div className="flex-shrink-0 w-1 h-1 bg-gray-400 rounded-full mt-2"></div>
+                                                        <p className="text-sm text-gray-700 leading-relaxed">{item}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {/* Add line break between sections */}
+                                            {sectionIndex < sections.length - 1 && (
+                                                <div className="border-t border-gray-200 my-4"></div>
+                                            )}
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center py-8">
+                                <div className="text-center">
+                                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-500 mb-1">No recommendations available</p>
+                                    <p className="text-xs text-gray-400">AI analysis will provide insights once data is processed</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </main>
 
