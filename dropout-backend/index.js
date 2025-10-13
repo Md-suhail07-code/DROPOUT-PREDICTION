@@ -915,11 +915,11 @@ app.get("/keep-alive",(req,res)=>{
   res.send("Keep Alive");
 });
 
-setInterval{()=>{
+setInterval(() => {
   fetch("https://dropout-backend-vyrv.onrender.com/keep-alive")
-  .then(() => console.log("Pinged self to keep alive"));
-  .catch((err) => console.log("Ping failed"));
-},10 * 60 * 1000};
+    .then(() => console.log("Pinged self to keep alive"))
+    .catch((err) => console.log("Ping failed:", err));
+}, 10 * 60 * 1000);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
