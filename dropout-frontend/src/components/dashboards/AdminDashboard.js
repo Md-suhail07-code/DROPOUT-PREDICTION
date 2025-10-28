@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../App';
 import { studentAPI, mentorAPI, adminAPI } from '../../services/api';
+import { calculateRiskScore } from '../../utils/riskCalculation';
 import TopNav from '../common/TopNav';
 import SummaryCards from '../common/SummaryCards';
 import CircularProgress from '../common/CircularProgress';
@@ -235,25 +236,11 @@ const AdminDashboard = () => {
   };
 
   const computeRiskScore = (attendance = 0, score = 0, feeStatus = '') => {
-    let riskScore = 0;
-    if (attendance < 60) riskScore += 40;
-    else if (attendance < 70) riskScore += 30;
-    else if (attendance < 80) riskScore += 20;
-    else if (attendance < 90) riskScore += 10;
-
-    const perf = Number.isFinite(Number(score)) ? Number(score) : 0;
-    if (perf < 40) riskScore += 30;
-    else if (perf < 50) riskScore += 25;
-    else if (perf < 60) riskScore += 20;
-    else if (perf < 70) riskScore += 15;
-    else if (perf < 80) riskScore += 10;
-    else if (perf < 90) riskScore += 5;
-
-    if ((feeStatus || '').toLowerCase() === 'overdue') riskScore += 30;
-    else if ((feeStatus || '').toLowerCase() === 'pending') riskScore += 15;
-    else if ((feeStatus || '').toLowerCase() === 'partial') riskScore += 10;
-
-    return Math.min(100, Math.max(0, Math.round(riskScore)));
+    return Number(calculateRiskScore({
+      attendance,
+      score,
+      fee_status: feeStatus
+    })) * 10; // Convert 0-10 score to percentage
   };
 
   const riskColorForScore = (score) => {
@@ -415,7 +402,7 @@ const AdminDashboard = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {(s.risk_score !== undefined && s.risk_score !== null) || s.risk_level ? (
                             (() => {
-                              const score = (s.risk_score !== undefined && s.risk_score !== null) ? Number(s.risk_score) : computeRiskScore(s.attendance, s.score ?? s.performance, s.fee_status);
+                              const score = computeRiskScore(s.attendance, s.backlogs, s.fee_status);
                               const displayScore = Number.isFinite(score) ? Math.round(score) : null;
                               if (displayScore !== null) {
                                 return (

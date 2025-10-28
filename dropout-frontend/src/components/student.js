@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 import { adminAPI } from '../services/api';
 import CircularProgress from './common/CircularProgress';
 import TopNav from './common/TopNav';
+import { calculateRiskScore, getRiskLevel, getRiskScoreColor, getRiskScoreBackgroundColor } from '../utils/riskCalculation';
 
 // Re-using the Badge component with improved modern styling
 const Badge = ({ color, children }) => (
@@ -25,70 +26,24 @@ const getRiskColor = (riskLevel) => {
     }
 };
 
-// Frontend copy of backend performance->score mapping
-function performanceToScoreFrontend(value) {
-    if (value == null) return 0;
-    const v = String(value).trim().toLowerCase();
-    switch (v) {
-        case 'excellent': return 90;
-        case 'good': return 80;
-        case 'average': return 70;
-        case 'poor': return 50;
-        default: {
-            const n = parseFloat(value);
-            return Number.isFinite(n) ? n : 0;
-        }
+
+
+function getScorePillClass(score) {
+    const level = getRiskLevel(score);
+    switch (level) {
+        case 'High':
+            return 'bg-red-600 text-white';
+        case 'Medium':
+            return 'bg-yellow-100 text-yellow-800';
+        case 'Low':
+            return 'bg-green-100 text-green-800';
+        default:
+            return 'bg-gray-100 text-gray-800';
     }
 }
 
-// Mirror backend calculateRiskLevel to get a numeric 0-100 score
-function calculateRiskScoreFrontend(attendance, score, feeStatus) {
-    let riskScore = 0;
-    const a = Number(attendance) || 0;
-    const s = Number(score) || 0;
-
-    // Attendance scoring (0-40 points)
-    if (a < 60) riskScore += 40;
-    else if (a < 70) riskScore += 30;
-    else if (a < 80) riskScore += 20;
-    else if (a < 90) riskScore += 10;
-
-    // Academic performance scoring (0-30 points)
-    if (s < 40) riskScore += 30;
-    else if (s < 50) riskScore += 25;
-    else if (s < 60) riskScore += 20;
-    else if (s < 70) riskScore += 15;
-    else if (s < 80) riskScore += 10;
-    else if (s < 90) riskScore += 5;
-
-    // Fee status scoring (0-30 points)
-    if (feeStatus === 'Overdue') riskScore += 30;
-    else if (feeStatus === 'Pending') riskScore += 15;
-    else if (feeStatus === 'Partial') riskScore += 10;
-
-    // Keep in 0-100
-    return Math.max(0, Math.min(100, Math.round(riskScore)));
-}
-
-function normalizeRiskScoreFromPrediction(val) {
-    if (val == null) return null;
-    const n = Number(val);
-    if (!Number.isFinite(n)) return null;
-    // If model returned a probability 0..1, convert to percent
-    if (n <= 1) return Math.round(n * 100);
-    return Math.round(n);
-}
-
-function getScorePillClass(score) {
-    if (score >= 70) return 'bg-red-600 text-white';
-    if (score >= 40) return 'bg-yellow-100 text-yellow-800';
-    return 'bg-green-100 text-green-800';
-}
-
 function getScoreBarColor(score) {
-    if (score >= 70) return 'bg-red-600';
-    if (score >= 40) return 'bg-yellow-400';
-    return 'bg-green-500';
+    return getRiskScoreBackgroundColor(score);
 }
 
 const StudentDetail = () => {
@@ -191,11 +146,11 @@ const StudentDetail = () => {
         // need student and prediction (prediction may be null, that's fine)
         if (!student) return;
 
-        const predScore = normalizeRiskScoreFromPrediction(prediction?.risk_score);
-        const perfVal = student.performance ?? student.score;
-        const perfNum = performanceToScoreFrontend(perfVal);
-        const computed = calculateRiskScoreFrontend(student.attendance, perfNum, student.fee_status);
-        const score = predScore ?? computed;
+        const score = Number(calculateRiskScore({
+            attendance: student.attendance,
+            backlogs: student.backlogs,
+            fee_status: student.fee_status
+        })) * 10; // Convert 0-10 score to percentage
 
         if (score > 70) {
             setNotifyMessage('Mentor Notified');
@@ -228,11 +183,12 @@ const StudentDetail = () => {
                                 <h1 className="text-3xl font-extrabold text-gray-900">{student.name}</h1>
                                 {/* Numeric risk score: prefer prediction.risk_score, fallback to calculated score */}
                                 {(() => {
-                                    const predScore = normalizeRiskScoreFromPrediction(prediction?.risk_score);
-                                    const perfVal = student.performance ?? student.score;
-                                    const perfNum = performanceToScoreFrontend(perfVal);
-                                    const computed = calculateRiskScoreFrontend(student.attendance, perfNum, student.fee_status);
-                                    const score = predScore ?? computed;
+                                    const score = Number(calculateRiskScore({
+                                        prediction: prediction?.risk_score,
+                                        attendance: student.attendance,
+                                        performance: student.backlogs,
+                                        fee_status: student.fee_status
+                                    })) * 10; // Convert 0-10 score to percentage
                                     const pillClass = getScorePillClass(score);
                                     const barColor = getScoreBarColor(score);
                                     return (
