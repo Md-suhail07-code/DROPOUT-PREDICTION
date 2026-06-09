@@ -911,16 +911,6 @@ app.use((req, res) => {
   });
 });
 
-app.get("/keep-alive",(req,res)=>{
-  res.send("Keep Alive");
-});
-
-setInterval(() => {
-  fetch("https://dropout-backend-vyrv.onrender.com/keep-alive")
-    .then(() => console.log("Pinged self to keep alive"))
-    .catch((err) => console.log("Ping failed:", err));
-}, 10 * 60 * 1000);
-
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
